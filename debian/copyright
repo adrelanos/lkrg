@@ -1,0 +1,15 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+
+Files: *
+Copyright: Copyright (c) 2015-2018 Adam 'pi3' Zabrocki
+License: GPL-2
+ This version of LKRG is hereby being made available under the terms of the GNU
+ General Public License version 2 as published by the Free Software Foundation.
+ .
+ LKRG is distributed in the hope that it will be useful, but WITHOUT ANY
+ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ .
+ On Debian systems, the full text of the GNU General Public
+ License version 3 can be found in the file
+ `/usr/share/common-licenses/GPL-2.1'.
