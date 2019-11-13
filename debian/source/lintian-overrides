@@ -1,5 +1,2 @@
 ## https://phabricator.whonix.org/T277
 debian-watch-does-not-check-gpg-signature
-
-## really empty
-lkrg source: source-contains-empty-directory src/modules/exploit_detection/syscalls/p_do_fork/
