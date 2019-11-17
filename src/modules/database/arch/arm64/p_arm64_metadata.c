@@ -28,7 +28,7 @@
 
 #include "../../../../p_lkrg_main.h"
 
-#if defined(CONFIG_ARM64)
+#ifdef CONFIG_ARM64
 
 /*
  * This function is independetly executed by each active CPU.

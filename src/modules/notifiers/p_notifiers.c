@@ -21,7 +21,7 @@
 
 #include "../../p_lkrg_main.h"
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0) && defined(_ASM_X86_IDLE_H)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
 static int p_idle_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data);
 #endif
 #ifdef CONFIG_CPU_FREQ
@@ -37,15 +37,13 @@ static int p_inetaddr_notifier(struct notifier_block *p_nb, unsigned long p_val,
 static int p_taskfree_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data);
 static int p_profile_event_exit_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data);
 static int p_profile_event_munmap_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data);
-#if defined(CONFIG_USB)
 static int p_usb_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data);
-#endif
 #if defined(CONFIG_ACPI)
 static int p_acpi_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data);
 #endif
 
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0) && defined(_ASM_X86_IDLE_H)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
 static struct notifier_block p_idle_notifier_nb = {
    .notifier_call = p_idle_notifier,
 };
@@ -91,11 +89,9 @@ static struct notifier_block p_profile_event_munmap_notifier_nb = {
    .notifier_call = p_profile_event_munmap_notifier,
 };
 
-#if defined(CONFIG_USB)
 static struct notifier_block p_usb_notifier_nb = {
    .notifier_call = p_usb_notifier,
 };
-#endif
 
 #if defined(CONFIG_ACPI)
 static struct notifier_block p_acpi_notifier_nb = {
@@ -110,7 +106,7 @@ void p_register_notifiers(void) {
    p_debug_log(P_LKRG_STRONG_DBG,
           "Entering function <p_register_notifiers>\n");
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0) &&  defined(_ASM_X86_IDLE_H)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
    idle_notifier_register(&p_idle_notifier_nb);
 #endif
 #ifdef CONFIG_CPU_FREQ
@@ -126,9 +122,7 @@ void p_register_notifiers(void) {
    task_handoff_register(&p_taskfree_notifier_nb);
    profile_event_register(PROFILE_TASK_EXIT, &p_profile_event_exit_notifier_nb);
    profile_event_register(PROFILE_MUNMAP, &p_profile_event_munmap_notifier_nb);
-#if defined(CONFIG_USB)
    usb_register_notify(&p_usb_notifier_nb);
-#endif
 #if defined(CONFIG_ACPI)
    register_acpi_notifier(&p_acpi_notifier_nb);
 #endif
@@ -139,7 +133,7 @@ void p_register_notifiers(void) {
           "Leaving function <p_register_notifiers>\n");
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0) && defined(_ASM_X86_IDLE_H)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
 static int p_idle_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data) {
 
 // STRONG_DEBUG
@@ -307,7 +301,6 @@ static int p_profile_event_munmap_notifier(struct notifier_block *p_nb, unsigned
    return 0x0;
 }
 
-#if defined(CONFIG_USB)
 static int p_usb_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data) {
 
 // STRONG_DEBUG
@@ -323,7 +316,6 @@ static int p_usb_notifier(struct notifier_block *p_nb, unsigned long p_val, void
 
    return 0x0;
 }
-#endif
 
 #if defined(CONFIG_ACPI)
 static int p_acpi_notifier(struct notifier_block *p_nb, unsigned long p_val, void *p_data) {
@@ -350,7 +342,7 @@ void p_deregister_notifiers(void) {
    p_debug_log(P_LKRG_STRONG_DBG,
           "Entering function <p_deregister_notifiers>\n");
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0) && defined(_ASM_X86_IDLE_H)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
    idle_notifier_unregister(&p_idle_notifier_nb);
 #endif
 #ifdef CONFIG_CPU_FREQ
@@ -366,9 +358,7 @@ void p_deregister_notifiers(void) {
    task_handoff_unregister(&p_taskfree_notifier_nb);
    profile_event_unregister(PROFILE_TASK_EXIT, &p_profile_event_exit_notifier_nb);
    profile_event_unregister(PROFILE_MUNMAP, &p_profile_event_munmap_notifier_nb);
-#if defined(CONFIG_USB)
    usb_unregister_notify(&p_usb_notifier_nb);
-#endif
 #if defined(CONFIG_ACPI)
    unregister_acpi_notifier(&p_acpi_notifier_nb);
 #endif
