@@ -14,8 +14,17 @@ Standards-Version: 4.3.0
 Package: lkrg-dkms
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Linux Kernel Runtime Guard
+Description: Linux Kernel Runtime Guard (LKRG)
  Linux Kernel Runtime Integrity Checking and Exploit Detection.
  .
- Linux Kernel Runtime Guard (LKRG) provides security through diversity.
+ LKRG provides security through diversity.
  Similar to running an uncommon operating system (kernel) would.
+ .
+ It renders whole classes of kernel exploits ineffective. Makes other
+ exploits less reliable and more difficult to write (see features [1]
+ and security [2]). LKRG was developed by a security professional with
+ review from other high profile security professionals (see authorship [3]).
+ .
+ [1] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG#features
+ [2] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG#security
+ [3] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG#Authorship
