@@ -1,3 +1,17 @@
+commit c9401db893f5b24ebac37a4225535d4181d01278
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Nov 18 09:46:18 2019 +0000
+
+    add an extra '.0' to version scheme to allow for version bumping
+    
+    even if upstream does not bump version
+
+commit 20d451ef6dfb642b5e97a6393bb11b0ca21d37e5
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Nov 18 09:42:16 2019 +0000
+
+    add changelog.upstream
+
 commit 7f4f9cc97ed748889e2f25acc48ad9d537a3484b
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Mon Nov 18 09:30:52 2019 +0000
