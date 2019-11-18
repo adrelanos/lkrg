@@ -28,6 +28,8 @@ Original LKRG upstream can be found here. [10]
 [8] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG
 [9] https://github.com/Whonix/lkrg
 [10] https://www.openwall.com/lkrg/
+
+This metapackage depends lkrg-dkms.
 ## How to install `lkrg` using apt-get ##
 
 1\. Download [Whonix's Signing Key]().
