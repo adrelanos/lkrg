@@ -11,9 +11,9 @@ Vcs-Browser: https://github.com/Whonix/lkrg
 Vcs-Git: https://github.com/Whonix/lkrg.git
 Standards-Version: 4.3.0
 
-Package: lkrg-dkms
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Package: lkrg
+Architecture: all
+Depends: lkrg-dkms,${misc:Depends},
 Description: Linux Kernel Runtime Guard (LKRG)
  Linux Kernel Runtime Integrity Checking and Exploit Detection.
  .
@@ -43,3 +43,13 @@ Description: Linux Kernel Runtime Guard (LKRG)
  [8] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG
  [9] https://github.com/Whonix/lkrg
  [10] https://www.openwall.com/lkrg/
+ .
+ This metapackage depends lkrg-dkms.
+
+Package: lkrg-dkms
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Linux Kernel Runtime Guard (LKRG) Source Code and DKMS
+ This package ships the source code of LKRG and DKMS integration files.
+ .
+ See package lkrg for a more detailed description.
