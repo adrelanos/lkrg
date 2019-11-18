@@ -52,4 +52,4 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Linux Kernel Runtime Guard (LKRG) Source Code and DKMS
  This package ships the source code of LKRG and DKMS integration files.
  .
- See package lkrg for a more detailed description.
+ See package LKRG for a more detailed description.
