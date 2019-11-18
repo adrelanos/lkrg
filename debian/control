@@ -12,7 +12,7 @@ Vcs-Git: https://github.com/Whonix/lkrg.git
 Standards-Version: 4.3.0
 
 Package: lkrg
-Architecture: all
+Architecture: any
 Depends: lkrg-dkms,${misc:Depends},
 Description: Linux Kernel Runtime Guard (LKRG)
  Linux Kernel Runtime Integrity Checking and Exploit Detection.
