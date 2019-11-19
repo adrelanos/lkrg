@@ -12,4 +12,5 @@ PATREONS usr/src/lkrg-0.7/
 PERFORMANCE usr/src/lkrg-0.7/
 scripts usr/src/lkrg-0.7/
 
+debian/30-lkrg.conf etc/sysctl.d/
 debian/30_lkrg.conf usr/lib/modules-load.d/
