@@ -1,3 +1,15 @@
+commit 6d5a3bba88ed2aa752845c65a21fe6cb73dc6cf4
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Nov 19 15:13:09 2019 +0000
+
+    Disable "System is clean!" message to avoid spamming dmesg and tty1.
+
+commit 8b868dbf8b39243f1d71386cea52f616c3a1da8d
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Nov 18 10:12:24 2019 +0000
+
+    bumped changelog version
+
 commit c9401db893f5b24ebac37a4225535d4181d01278
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Mon Nov 18 09:46:18 2019 +0000
