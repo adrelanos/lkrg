@@ -12,7 +12,7 @@ Vcs-Git: https://github.com/Whonix/lkrg.git
 Standards-Version: 4.3.0
 
 Package: lkrg
-Architecture: any
+Architecture: linux-amd64
 Depends: lkrg-dkms, ${misc:Depends}
 Description: Linux Kernel Runtime Guard (LKRG)
  Linux Kernel Runtime Integrity Checking and Exploit Detection.
@@ -47,8 +47,8 @@ Description: Linux Kernel Runtime Guard (LKRG)
  This metapackage depends lkrg-dkms.
 
 Package: lkrg-dkms
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Architecture: linux-amd64
+Depends: linux-headers-amd64 [linux-amd64], ${shlibs:Depends}, ${misc:Depends}
 Description: Linux Kernel Runtime Guard (LKRG) Source Code and DKMS
  Linux Kernel Runtime Integrity Checking and Exploit Detection.
  .
