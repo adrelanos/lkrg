@@ -13,7 +13,7 @@ Standards-Version: 4.3.0
 
 Package: lkrg
 Architecture: any
-Depends: lkrg-dkms,${misc:Depends},
+Depends: lkrg-dkms, ${misc:Depends}
 Description: Linux Kernel Runtime Guard (LKRG)
  Linux Kernel Runtime Integrity Checking and Exploit Detection.
  .
