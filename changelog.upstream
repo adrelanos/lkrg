@@ -1,3 +1,37 @@
+commit 51cbce6eeef5575a308d1cb4ad856c53118b9a35
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Thu Nov 28 09:40:35 2019 -0500
+
+    readme
+
+commit 667d75f62b7288ae6401b161bb645da42f5bb619
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Nov 26 08:14:54 2019 +0000
+
+    version_numbers_by_upstream=true
+
+commit 1886b1beb9e36d41df2fa8930ad66cf51f1bfc3b
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Nov 26 08:12:27 2019 +0000
+
+    packaging fix: amd64 (includes Intel) only for now
+    
+    depend on kernel headers package
+    
+    https://www.openwall.com/lists/lkrg-users/2018/07/31/3
+
+commit c18d66b34d2101ebec26e1244b7b14789789f8cd
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Nov 26 02:52:59 2019 -0500
+
+    minor
+
+commit 48407be43241bb3e8e6e110f607122a2c2969157
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Nov 19 15:24:27 2019 +0000
+
+    bumped changelog version
+
 commit 6d5a3bba88ed2aa752845c65a21fe6cb73dc6cf4
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Tue Nov 19 15:13:09 2019 +0000
