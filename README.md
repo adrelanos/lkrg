@@ -66,7 +66,11 @@ sudo apt-get install lkrg
 
 ## How to Build deb Package ##
 
-Replace `apparmor-profile-torbrowser` with the actual name of this package with `lkrg` and see [instructions](https://www.whonix.org/wiki/Dev/Build_Documentation/apparmor-profile-torbrowser).
+Any standard Debian build tools can be used. For example. Quick and easy.
+
+```
+dpkg-buildpackage -b
+```
 
 ## Contact ##
 
