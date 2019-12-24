@@ -1,3 +1,27 @@
+commit 1b24f401bd10819cebd8f6963aad6e3ab575b93c
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Dec 24 18:05:58 2019 -0500
+
+    remove superfluous Before=lkrg.service
+
+commit b278b83e4aa2422fec54f9a56ac24fe0a9c0acc0
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Dec 24 18:04:14 2019 -0500
+
+    convert to systemd unit file for better flexility and compatibility with tirdad
+    
+    load lkrg after tirdad
+    
+    otherwise lkrg would detect tirdad as malware
+    
+    allow not loading lkrg using kernel parameter nolkrg
+
+commit b4d5adb1ac0009417f8f9ef566c17c36f5b5b3ce
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Thu Nov 28 09:56:21 2019 -0500
+
+    bumped changelog version
+
 commit 51cbce6eeef5575a308d1cb4ad856c53118b9a35
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Thu Nov 28 09:40:35 2019 -0500
