@@ -14,7 +14,6 @@ After=local-fs.target
 After=systemd-modules-load.service
 After=tirdad.service
 
-Before=lkrg.service
 Before=sysinit.target
 Before=network.target
 
