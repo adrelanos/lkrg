@@ -1,3 +1,15 @@
+commit 1c9b0aa863f0ed2ee30d4e07d2b0c23fd211a013
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Dec 24 18:36:07 2019 -0500
+
+    update debian/lkrg-dkms.install
+
+commit e1dbfd69025c0c31e393c749b737eb14cd1e4ca8
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Dec 24 18:27:41 2019 -0500
+
+    bumped changelog version
+
 commit 1b24f401bd10819cebd8f6963aad6e3ab575b93c
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Tue Dec 24 18:05:58 2019 -0500
