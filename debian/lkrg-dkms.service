@@ -12,7 +12,7 @@ Requires=local-fs.target
 
 After=local-fs.target
 After=systemd-modules-load.service
-After=tirdad.service
+After=tirdad-dkms.service
 
 Before=sysinit.target
 Before=network.target
