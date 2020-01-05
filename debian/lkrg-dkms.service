@@ -21,6 +21,7 @@ Before=network.target
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/sbin/modprobe p_lkrg
+ExecStartPost=/sbin/sysctl lkrg.clean_message=0
 
 [Install]
 WantedBy=multi-user.target
