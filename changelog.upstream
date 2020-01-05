@@ -1,3 +1,17 @@
+commit 7ef8cafbc2a718f7b2705bbd2c0fcffd4507e6ce
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Jan 5 04:59:36 2020 -0500
+
+    disable clean message spam
+    
+    Thanks to disrupt_the_flow for the bug report!
+
+commit f74a6fdf4d376bb557f32a38bef08dd2da20336d
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed Jan 1 05:59:11 2020 -0500
+
+    bumped changelog version
+
 commit 1f8d1296e7f31ecc4b5438b23855cedf4646c0fe
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Wed Jan 1 05:38:49 2020 -0500
