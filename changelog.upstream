@@ -1,3 +1,15 @@
+commit df12c862d1962f0934fd6d648b913eee55b4a331
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sat Jan 11 06:35:09 2020 -0500
+
+    /etc/modprobe.d/30_lkrg.conf syntax fix
+
+commit 00f234a59982258d8ab0e64931898f00605e8320
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sat Jan 11 05:23:45 2020 -0500
+
+    bumped changelog version
+
 commit acb67c743c97620cb53eb9be3bb3e43eec1dd8d3
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Sat Jan 11 05:04:56 2020 -0500
