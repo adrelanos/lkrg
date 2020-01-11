@@ -1,3 +1,27 @@
+commit acb67c743c97620cb53eb9be3bb3e43eec1dd8d3
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sat Jan 11 05:04:56 2020 -0500
+
+    load through `/usr/lib/modules-load.d/40_lkrg.conf`
+    
+    use `/etc/modprobe.d/30_lkrg.conf`
+    
+    instead of systemd unit file to
+    
+    Disable "System is clean!" message to avoid spamming dmesg and tty1.
+    
+    `options lkrg.clean_message=0`
+    
+    Load `tirdad` before `p_lkrg` so LKRG does not judge `tirdad` to be malicious.
+    
+    `softdep p_lkrg pre: tirdad`
+
+commit ccd78a8d9e96c58506ff63f7b2ee2620ad616a3f
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Jan 5 10:52:20 2020 -0500
+
+    bumped changelog version
+
 commit 7ef8cafbc2a718f7b2705bbd2c0fcffd4507e6ce
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Sun Jan 5 04:59:36 2020 -0500
