@@ -1,3 +1,17 @@
+commit 6e24f0564039f38e8e7a55305af97d5896613099
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sat Jan 11 07:57:55 2020 -0500
+
+    disable clean message in source code
+    
+    p_lkrg_global_ctrl.p_clean_message = 0x0;   // By default do not print "System is clean!" message
+
+commit cf1143a0a39e56d122bc2711e85969bdeb9fb83a
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sat Jan 11 06:36:42 2020 -0500
+
+    bumped changelog version
+
 commit df12c862d1962f0934fd6d648b913eee55b4a331
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Sat Jan 11 06:35:09 2020 -0500
