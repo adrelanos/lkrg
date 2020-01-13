@@ -1,3 +1,21 @@
+commit 99439fe2d95f5f588f4e3d3f15842e336da07acc
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jan 13 09:10:11 2020 -0500
+
+    revert to load LKRG using systemd unit file
+    
+    rather than systemd-modules-load
+    
+    due to issues:
+    
+    https://forums.whonix.org/t/linux-kernel-runtime-guard-lkrg-linux-kernel-runtime-integrity-checking-and-exploit-detection/8477/22
+
+commit 9a3faea164919a044a700b5c7a49e599030afd89
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sat Jan 11 15:18:46 2020 -0500
+
+    bumped changelog version
+
 commit 849aa13fadd6e6b25461769fbcd411eaf58d3b17
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Sat Jan 11 09:20:23 2020 -0500
