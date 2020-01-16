@@ -1,0 +1,16 @@
+## Copyright (C) 2019 - 2019 ENCRYPTED SUPPORT LP <adrelanos@riseup.net>
+## See the file COPYING for copying conditions.
+
+## TODO: do not hardcode 0.7
+
+src/* usr/src/lkrg-0.7/src
+
+CHANGES usr/src/lkrg-0.7/
+INSTALL usr/src/lkrg-0.7/
+Makefile usr/src/lkrg-0.7/
+PATREONS usr/src/lkrg-0.7/
+PERFORMANCE usr/src/lkrg-0.7/
+scripts usr/src/lkrg-0.7/
+
+debian/30_lkrg.conf etc/modprobe.d/
+debian/40_lkrg.conf usr/lib/modules-load.d/
