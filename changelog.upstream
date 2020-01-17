@@ -1,3 +1,38 @@
+commit a1e552f2bf676bfd7e7bd72d52cc0bce1b7b9809
+Merge: 403f2fa 04ba2c7
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Thu Jan 16 09:33:01 2020 -0500
+
+    Merge branch 'master' into adam_master
+
+commit 04ba2c750b25d27b41baf7d60d9ae72f834ce942
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Thu Jan 16 09:24:48 2020 -0500
+
+    Revert "disable clean message in source code"
+    
+    This reverts commit 6e24f0564039f38e8e7a55305af97d5896613099.
+
+commit 5d6fdbc554dd676194e108fb0a655587cdada2f4
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Thu Jan 16 09:23:46 2020 -0500
+
+    Revert "downgrade to gpg verified lkrg 0.7 upstream source code"
+    
+    This reverts commit 72d69bb29aef7cf91a6167903ce465b293e00b51.
+
+commit 403f2fa92cdb8071a39afa031f08719972aa563e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jan 16 06:05:15 2020 +0000
+
+    Fix compilation on non-x86 platforms for kernel 5.3+
+
+commit c8c9f266eed961ac090d44bf4762730f328d2a56
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jan 13 09:11:17 2020 -0500
+
+    bumped changelog version
+
 commit 99439fe2d95f5f588f4e3d3f15842e336da07acc
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Mon Jan 13 09:10:11 2020 -0500
@@ -104,6 +139,17 @@ Date:   Wed Jan 1 05:38:49 2020 -0500
 
     fix, After=tirdad-dkms.service
 
+commit 3262383a680455c48bf9f637a4267c2e5a53adc6
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Dec 31 11:27:37 2019 -0500
+
+    [1] Remove P_LKRG_CI_X86_NO_MSR compilation option
+    [2] Introduce new sysctl interface - lkrg.enforce_msr (enabled by default):
+    
+            lkrg.enforce_msr:
+              0 - disable MSRs verification during CI
+              1 - enable MSRs verification during CI
+
 commit 47ef99e79055445f0a4fb1a92fb8c75601fb3d09
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Wed Dec 25 06:02:28 2019 -0500
@@ -140,6 +186,61 @@ Date:   Tue Dec 24 18:04:14 2019 -0500
     
     allow not loading lkrg using kernel parameter nolkrg
 
+commit 9f502087ac1adabdbc0bf9c39cef82d9e869ddd4
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Dec 20 19:26:15 2019 -0500
+
+    Split some of the printed information into various log-level
+
+commit aea93dc9cc4c932adf9f1923c0f9f8309272a34a
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Dec 20 18:52:06 2019 -0500
+
+    Introduce a P_CTRL macro for referencing control structure in RO-page
+
+commit 5eb075e3228e2f69531a57044b741f53403cc41e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Dec 20 18:08:59 2019 -0500
+
+    Change debug output to provide more useful information about some kernel addresses
+
+commit a218d8103900882f10d7b1a48395579a1635a3fd
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Dec 20 18:04:56 2019 -0500
+
+    Fix fallback path in the initialization routine
+
+commit d5032b43765e065d3ef31eb422ea8be916ea0438
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Dec 20 15:43:48 2019 -0500
+
+    This is a pretty big change in LKRG:
+      [1] Introducing a RO-page which keeps the most-critical internal structures
+      [2] Moving internal control structure (configurable via sysctl interface) to the RO-page
+      [3] Introducing a new structure which keeps all dynamically resolved pointers
+      [4] Moving a new structure with dynamic pointers to the RO-page
+      [5] Refactoring the entire code to be compatible with the new design
+      [6] Adding appropriate messages when a new sysctl option is put in place
+      [7] A few more minor changes
+
+commit 161a3c11e2ee7cf4a768cf1131f7001869f08184
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Dec 1 20:59:25 2019 -0500
+
+    [CI] <x86/AMD64> Introduce an option to compile LKRG without verifying MSRs on each (v)CPU core. It might be useful for the host machines which manages VMs (root-partition). This compilation option is DISABLED by default.
+
+commit bfcc8de9b5de19d6fa3158c1ec178d4d0367a954
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Dec 1 19:51:35 2019 -0500
+
+    [ED] Introduce an option to compile LKRG without full stack-walk valdation during pCFI. It might be useful for not-so-smart drivers which might dynamically allocate RWX page and execute code from there. This compilation option is DISABLED by default.
+
+commit bbd126efa78f8771faa7e1828d1a8a8b08c9ab98
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Nov 30 21:20:57 2019 -0500
+
+    [CI] Disable MSR_IA32_CR_PAT validation for now. It can be reenabled in the future if needed. On x86/AMD64 kernel might reconfigure MTRR after CPU is being put online which might be problematic for S3/S4 state.
+
 commit b4d5adb1ac0009417f8f9ef566c17c36f5b5b3ce
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Thu Nov 28 09:56:21 2019 -0500
@@ -151,6 +252,12 @@ Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Thu Nov 28 09:40:35 2019 -0500
 
     readme
+
+commit 196266c5eda079022f3876fa625089a7063269ef
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Nov 27 01:38:53 2019 -0500
+
+    [ED] Do not print stacktrace if CONFIG_STACKTRACE is not enabled
 
 commit 667d75f62b7288ae6401b161bb645da42f5bb619
 Author: Patrick Schleizer <adrelanos@riseup.net>
