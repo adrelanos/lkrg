@@ -1,3 +1,21 @@
+commit 156bc841c9a9688c2f0d6d1717a2582fb89d8a69
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Jan 19 08:26:50 2020 -0500
+
+    fix, compilation on Whonix-Gateway with 768 MB RAM only
+    
+    use only 1 core during DKMS compilation when there is less than 2 GB RAM
+    
+    as workaround Linux low memory issues
+    
+    https://forums.whonix.org/t/linux-kernel-runtime-guard-lkrg-linux-kernel-runtime-integrity-checking-and-exploit-detection/8477/26
+
+commit 4d45265bd2c32495065d971dea46062fd6c58918
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 17 03:32:13 2020 -0500
+
+    bumped changelog version
+
 commit a1e552f2bf676bfd7e7bd72d52cc0bce1b7b9809
 Merge: 403f2fa 04ba2c7
 Author: Patrick Schleizer <adrelanos@riseup.net>
