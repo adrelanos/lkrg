@@ -1,3 +1,22 @@
+commit ebb81e8ab8d4325f3168b9678a5609e8bf484eab
+Merge: da823ed 22941e8
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jan 20 03:47:06 2020 -0500
+
+    Merge remote-tracking branch 'adam/master'
+
+commit 22941e818e606919d791f936c71be84d4952cb88
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Jan 20 02:29:04 2020 +0000
+
+    [CI] fix bug in a new code adding support for batch mode for *_JUMP_LABEL on kernels 5.3+ on x86 platform.
+
+commit da823ed85fa1d268d91854162e6afc3e2bb45b9d
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Jan 19 09:03:06 2020 -0500
+
+    bumped changelog version
+
 commit 156bc841c9a9688c2f0d6d1717a2582fb89d8a69
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Sun Jan 19 08:26:50 2020 -0500
