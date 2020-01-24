@@ -1,3 +1,32 @@
+commit b75086f195069767e8b60789d4790e282188da74
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 24 02:40:11 2020 -0500
+
+    lkrg-loader: remove "lsmod | grep -q vbox" from VirtualBox host detection
+    
+    since this would be true in VirtualBox guest VM as well
+
+commit 5da17965c12aa2e65dc54e4ef48286959ac5ba61
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 24 02:30:15 2020 -0500
+
+    add VirtualBox host support
+    
+    add user space loader which sets `lkrg.enforce_msr=0 lkrg.enforce_pcfi=1`
+    
+    Do not start lkrg systemd service after installation to avoid
+    loading LKRG kernel module to avoid killing VirtualBox VMs.
+    
+    Reboot required after installation.
+    
+    https://www.openwall.com/lists/lkrg-users/2020/01/24/2
+
+commit 04041f08c75fa748610b6e6be6ba52b8a97a9e5f
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 24 01:25:53 2020 -0500
+
+    bumped changelog version
+
 commit 4682be3d129b277f334219a7cda4f7accbfc5a2b
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Fri Jan 24 01:19:49 2020 -0500
