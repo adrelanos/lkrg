@@ -1,3 +1,15 @@
+commit a05cd57ac2630e0ceef551a8b52e1eded56daf5c
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 24 02:53:32 2020 -0500
+
+    fix path to lkrg-loader
+
+commit d15d2bddea22138a0482f3cc78320446e16891e5
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 24 02:41:29 2020 -0500
+
+    bumped changelog version
+
 commit b75086f195069767e8b60789d4790e282188da74
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Fri Jan 24 02:40:11 2020 -0500
