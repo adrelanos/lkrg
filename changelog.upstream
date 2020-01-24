@@ -1,3 +1,15 @@
+commit dd41ee489abe519e215506567fb50669be11d319
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 24 04:08:47 2020 -0500
+
+    Load LKRG before VirtualBox kernel module load service.
+
+commit e1fe919b653a7ed08f3f0b927a6d21ec509e899b
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 24 02:54:46 2020 -0500
+
+    bumped changelog version
+
 commit a05cd57ac2630e0ceef551a8b52e1eded56daf5c
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Fri Jan 24 02:53:32 2020 -0500

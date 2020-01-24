@@ -1,3 +1,9 @@
+lkrg (0:0.7.20-1) unstable; urgency=medium
+
+  * New upstream version (local package).
+
+ -- Patrick Schleizer <adrelanos@riseup.net>  Fri, 24 Jan 2020 09:09:44 +0000
+
 lkrg (0:0.7.19-1) unstable; urgency=medium
 
   * New upstream version (local package).
