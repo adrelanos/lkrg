@@ -11,10 +11,6 @@ set -e
 
 modprobe p_lkrg
 
-if lsmod | grep -q vbox ; then
-   virtualbox_detected=true
-fi
-
 if command -v vboxmanage &>/dev/null ; then
    virtualbox_detected=true
 fi
