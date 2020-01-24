@@ -22,7 +22,10 @@ Before=network.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/sbin/modprobe p_lkrg
+
+## https://forums.whonix.org/t/linux-kernel-runtime-guard-lkrg-linux-kernel-runtime-integrity-checking-and-exploit-detection/8477/32
+## https://www.openwall.com/lists/lkrg-users/2020/01/24/2
+ExecStart=/usr/lib/lkrg/lkrg-loader
 
 [Install]
 WantedBy=multi-user.target

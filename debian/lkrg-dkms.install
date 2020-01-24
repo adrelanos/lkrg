@@ -14,3 +14,7 @@ scripts usr/src/lkrg-0.7/
 
 debian/30_lkrg.conf etc/modprobe.d/
 debian/40_lkrg.conf usr/lib/modules-load.d/
+
+## https://forums.whonix.org/t/linux-kernel-runtime-guard-lkrg-linux-kernel-runtime-integrity-checking-and-exploit-detection/8477/32
+## https://www.openwall.com/lists/lkrg-users/2020/01/24/2
+lkrg-loader /usr/lib/lkrg/

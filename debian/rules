@@ -12,6 +12,9 @@ include /usr/share/dpkg/buildflags.mk
 %:
 	dh $@ --with dkms
 
+override_dh_installsystemd:
+	dh_installsystemd --no-start --no-restart-after-upgrade --no-stop-on-upgrade --no-restart-on-upgrade
+
 override_dh_installchangelogs:
 	dh_installchangelogs CHANGES upstream
 
