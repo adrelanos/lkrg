@@ -90,7 +90,7 @@ typedef struct _p_lkrg_global_conf_structure {
 #ifdef CONFIG_X86
    unsigned int p_smep_panic;
 #endif
-   unsigned int p_umh_lock;
+   unsigned int p_enforce_umh;
    unsigned int p_enforce_msr;
    unsigned int p_enforce_pcfi;
 
@@ -205,6 +205,5 @@ extern p_ro_page p_ro;
  #define __GFP_REPEAT   ((__force gfp_t)___GFP_RETRY_MAYFAIL)
 #endif
 
-extern unsigned int p_init_log_level;
 
 #endif
