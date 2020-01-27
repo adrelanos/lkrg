@@ -1,3 +1,61 @@
+commit b31abfcf4ae5c01444ecd07830d0ca137d084406
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jan 27 04:46:29 2020 -0500
+
+    refactoring
+
+commit eb778fe208cb3a1c73d8e76d6611306b13f7a8e5
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jan 27 04:45:42 2020 -0500
+
+    code simplification
+
+commit 8ef3849660cbf50e164051f3f6df78f2e3a14fdb
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jan 27 04:44:54 2020 -0500
+
+    use module parameters rather than sysctl
+    
+    since upstream added support for it module parameters
+    
+    https://www.openwall.com/lists/lkrg-users/2020/01/25/2
+
+commit ee8a2dde92c07812fa217ef7aa6935be60aab9ea
+Merge: 62625ea 2c1177b
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jan 27 04:40:49 2020 -0500
+
+    Merge remote-tracking branch 'adam/master'
+
+commit 2c1177b585237e05542b266d5875a865dd49b4af
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Jan 25 23:13:07 2020 +0000
+
+    [1] Rename 'p_init_log_level' module param name to 'log_level'
+    [2] Introduce 5 new module parameters:
+        -> clean_message
+        -> block_modules
+        -> enforce_umh
+        -> enforce_msr
+        -> enforce_pcfi
+
+commit 347d13e9b848dd19f74fab67b8e587e90d55070e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Jan 25 22:07:34 2020 +0000
+
+    [ED] Replace 'umh_lock' sysctl interface with 'enforce_umh'. New interface has 3 possible states:
+    
+             lkrg.enforce_umh:
+                0 - Disable protection
+                1 - Whitelist UMH paths (default)
+                2 - Completely block UMH
+
+commit 62625eaaece2e36c55e9c5de47accc5c5ed7b359
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jan 24 12:01:07 2020 -0500
+
+    bumped changelog version
+
 commit f1fbf2be76ac23aa5ae7c4a1e99159a79875ad41
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Fri Jan 24 04:48:39 2020 -0500
