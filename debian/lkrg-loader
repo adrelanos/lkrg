@@ -14,7 +14,6 @@ if command -v vboxmanage &>/dev/null ; then
    ## https://www.openwall.com/lists/lkrg-users/2020/01/24/2
    ## https://www.openwall.com/lists/lkrg-users/2020/01/25/2
    modprobe p_lkrg enforce_msr=0 enforce_pcfi=1
-   exit 0
+else
+   modprobe p_lkrg
 fi
-
-modprobe p_lkrg
