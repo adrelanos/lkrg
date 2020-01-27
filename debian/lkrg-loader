@@ -9,8 +9,6 @@ fi
 
 set -e
 
-modprobe p_lkrg
-
 if command -v vboxmanage &>/dev/null ; then
    virtualbox_detected=true
 fi
@@ -18,5 +16,9 @@ fi
 if [ "$virtualbox_detected" = "true" ]; then
    ## https://forums.whonix.org/t/linux-kernel-runtime-guard-lkrg-linux-kernel-runtime-integrity-checking-and-exploit-detection/8477/32
    ## https://www.openwall.com/lists/lkrg-users/2020/01/24/2
-   sysctl -w lkrg.enforce_msr=0 lkrg.enforce_pcfi=1
+   ## https://www.openwall.com/lists/lkrg-users/2020/01/25/2
+   modprobe p_lkrg enforce_msr=0 enforce_pcfi=1
+   exit 0
 fi
+
+modprobe p_lkrg
