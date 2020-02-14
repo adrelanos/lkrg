@@ -1,3 +1,21 @@
+commit 878f2dcc895d609082110cf20b5d59164f3535b8
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Feb 14 04:19:45 2020 -0500
+
+    Auto load LKRG after installation.
+    
+    Since LKRG now supports module parameters and VirtualBox host support,
+    it can be automatically started after installation since it would no longer
+    kill VirtualBox VMs running on a host.
+    
+    https://www.openwall.com/lists/lkrg-users/2020/01/25/2
+
+commit afdc066e2d84a094d18b0911da33e275124d5383
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Feb 14 03:49:05 2020 -0500
+
+    bumped changelog version
+
 commit 20eaa12483fd1623364aa3c62fa67fcff03cfbe1
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Fri Feb 14 03:46:53 2020 -0500
