@@ -1,3 +1,20 @@
+commit 20eaa12483fd1623364aa3c62fa67fcff03cfbe1
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Feb 14 03:46:53 2020 -0500
+
+    fix compilation using DKMS on kernel upgrade
+    
+    by adding support for make variable KERNELRELEASE
+    (DKMS sets it)
+    
+    https://forums.whonix.org/t/dkms-kernel-modules-lkrg-and-tirdad-fail-to-properly-recompile-on-kernel-upgrade/8931
+
+commit 771f91feac42e310f532fffa29209e5ed1e2962c
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jan 27 04:52:34 2020 -0500
+
+    bumped changelog version
+
 commit b31abfcf4ae5c01444ecd07830d0ca137d084406
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Mon Jan 27 04:46:29 2020 -0500
