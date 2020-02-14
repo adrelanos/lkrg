@@ -8,7 +8,14 @@
 P_OUTPUT = output
 P_PWD ?= $(shell pwd)
 P_KVER ?= $(shell uname -r)
-P_KERNEL := /lib/modules/$(P_KVER)/build
+
+ifneq ($(KERNELRELEASE),)
+	P_KERNEL := /lib/modules/$(KERNELRELEASE)/build
+else
+	## KERNELRELEASE not set.
+	P_KERNEL := /lib/modules/$(P_KVER)/build
+endif
+
 P_BOOTUP_SCRIPT ?= scripts/bootup/lkrg-bootup.sh
 
 #
