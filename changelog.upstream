@@ -1,3 +1,22 @@
+commit cc8fe924ab32363fb11501d5654bdd085300e2eb
+Merge: a4d8502 0cf451b
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Feb 16 01:00:13 2020 -0500
+
+    Merge remote-tracking branch 'adam/master'
+
+commit 0cf451be9b45032611ad45841b597041a6a4836c
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Feb 15 22:41:07 2020 +0000
+
+    Add support for DKMS. Take into account variable KERNELRELEASE
+
+commit a4d850263c0de872c4b1b532852cbf624d3913ce
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Feb 14 04:22:18 2020 -0500
+
+    bumped changelog version
+
 commit 878f2dcc895d609082110cf20b5d59164f3535b8
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Fri Feb 14 04:19:45 2020 -0500
@@ -26,6 +45,25 @@ Date:   Fri Feb 14 03:46:53 2020 -0500
     (DKMS sets it)
     
     https://forums.whonix.org/t/dkms-kernel-modules-lkrg-and-tirdad-fail-to-properly-recompile-on-kernel-upgrade/8931
+
+commit 3b9644ed91ae663bc3090235fa1353d4425634af
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Feb 3 22:28:17 2020 +0000
+
+    Add support for kernels 5.5+
+
+commit 3a16c657c38b882c9159687a888068471cfbcc91
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Feb 3 20:20:16 2020 +0000
+
+    [ED] Fix compilation problem on older kernels. PID namespace pointer has different name on older kernels (< 3.11)
+
+commit 63b10994c07eea655378aa398d1bcfe6ac5259e4
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Feb 1 00:39:37 2020 +0000
+
+    [1] Add a new logic in Exploit-Detection feature for detection namespaces escape. LKRG now validates various namespace configurations per thread (task_struct)
+    [2] Update lkrg.service script
 
 commit 771f91feac42e310f532fffa29209e5ed1e2962c
 Author: Patrick Schleizer <adrelanos@riseup.net>
