@@ -1,3 +1,15 @@
+commit 64e36bfa81196e4bbf98c9124a3a517a4d073213
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed Apr 1 16:32:15 2020 -0400
+
+    add debian install file
+
+commit 51af1b4e07183ea401557fe549a8396de4ebbb58
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed Apr 1 10:50:07 2020 -0400
+
+    bumped changelog version
+
 commit dda12b064dfab69a9a16f4deca53020285215c8f
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Wed Apr 1 09:15:15 2020 -0400
