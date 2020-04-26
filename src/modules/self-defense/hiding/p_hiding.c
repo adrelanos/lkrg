@@ -17,7 +17,6 @@
 
 #include "../../../p_lkrg_main.h"
 
-struct module             *p_find_me = THIS_MODULE;
 /*
 struct kobject            *p_find_kobj_parent;
 struct module_sect_attrs  *p_find_sect_attrs;
@@ -31,7 +30,7 @@ void p_hide_itself(void) {
    p_debug_log(P_LKRG_STRONG_DBG,
           "Entering function <p_hide_itself>\n");
 
-   if (P_CTRL(p_hide_module)) {
+   if (P_CTRL(p_hide_lkrg)) {
       p_print_log(P_LKRG_WARN,
              "Module is already hidden!\n");
       goto p_hide_itself_out;
@@ -47,10 +46,10 @@ void p_hide_itself(void) {
    mutex_lock(&module_mutex);
    spin_lock(&p_db_lock);
 
-   P_HIDE_FROM_MODULE_LIST(p_find_me);
-   P_HIDE_FROM_KOBJ(p_find_me);
+   P_HIDE_FROM_MODULE_LIST(P_SYM(p_find_me));
+   P_HIDE_FROM_KOBJ(P_SYM(p_find_me));
 #if defined(CONFIG_DYNAMIC_DEBUG)
-   P_HIDE_FROM_DDEBUG(p_find_me);
+   P_HIDE_FROM_DDEBUG(P_SYM(p_find_me));
 #endif
 
    spin_lock(&p_db.p_jump_label.p_jl_lock);
@@ -71,7 +70,7 @@ void p_hide_itself(void) {
    /* We should be fine now! */
 
    p_lkrg_open_rw();
-   P_CTRL(p_hide_module) = 0x1;
+   P_CTRL(p_hide_lkrg) = 0x1;
    p_lkrg_close_rw();
 
    spin_unlock(&p_db_lock);
@@ -100,7 +99,7 @@ void p_unhide_itself(void) {
    p_debug_log(P_LKRG_STRONG_DBG,
           "Entering function <p_unhide_itself>\n");
 
-   if (!P_CTRL(p_hide_module)) {
+   if (!P_CTRL(p_hide_lkrg)) {
       p_print_log(P_LKRG_WARN,
              "Module is already unhidden (visible)!\n");
       goto p_unhide_itself_out;
@@ -111,10 +110,10 @@ void p_unhide_itself(void) {
    mutex_lock(&module_mutex);
    spin_lock(&p_db_lock);
 
-   P_UNHIDE_FROM_MODULE_LIST(p_find_me,P_SYM(p_global_modules));
-   P_UNHIDE_FROM_KOBJ(p_find_me,p_tmp_kset,p_tmp_ktype);
+   P_UNHIDE_FROM_MODULE_LIST(P_SYM(p_find_me),P_SYM(p_global_modules));
+   P_UNHIDE_FROM_KOBJ(P_SYM(p_find_me),p_tmp_kset,p_tmp_ktype);
 
-//   P_UNHIDE_FROM_KOBJ(p_find_me,p_find_kobj_parent,
+//   P_UNHIDE_FROM_KOBJ(P_SYM(p_find_me),p_find_kobj_parent,
 //                      p_find_sect_attrs,p_find_notes_attrs);
 
    spin_lock(&p_db.p_jump_label.p_jl_lock);
@@ -135,7 +134,7 @@ void p_unhide_itself(void) {
    /* We should be fine now! */
 
    p_lkrg_open_rw();
-   P_CTRL(p_hide_module) = 0x0;
+   P_CTRL(p_hide_lkrg) = 0x0;
    p_lkrg_close_rw();
 
    spin_unlock(&p_db_lock);
