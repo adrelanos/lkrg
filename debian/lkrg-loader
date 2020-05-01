@@ -13,7 +13,7 @@ if command -v vboxmanage &>/dev/null ; then
    ## https://forums.whonix.org/t/linux-kernel-runtime-guard-lkrg-linux-kernel-runtime-integrity-checking-and-exploit-detection/8477/32
    ## https://www.openwall.com/lists/lkrg-users/2020/01/24/2
    ## https://www.openwall.com/lists/lkrg-users/2020/01/25/2
-   modprobe p_lkrg enforce_msr=0 enforce_pcfi=1
+   modprobe p_lkrg msr_validate=0 pcfi_validate=1
 else
    modprobe p_lkrg
 fi
