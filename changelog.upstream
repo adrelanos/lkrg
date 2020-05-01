@@ -1,3 +1,15 @@
+commit bfeb1732e651ff0cc61273e1597b6a405885d69a
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri May 1 13:41:18 2020 -0400
+
+    update options names as per upstream changes
+
+commit e3ba276170be26efc78c3827626368eaee4b6f04
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun Apr 26 08:06:19 2020 -0400
+
+    bumped changelog version
+
 commit 66482c1870c9115ed5bf455566d7021c9c234100
 Merge: 48a9c49 f2ab708
 Author: Patrick Schleizer <adrelanos@riseup.net>
