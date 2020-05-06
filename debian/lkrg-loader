@@ -9,11 +9,23 @@ fi
 
 set -e
 
+## Allow setting lkrg_exec to give full control over command line.
+if [ ! "$lkrg_exec" = "" ]; then
+   exec $lkrg_exec
+fi
+
+## Append required kernel parameters to $lkrg_opts but allow to user setting
+## to append to $lkrg_opts.
+
+if ! cat /proc/cpuinfo | grep --quiet smep ; then
+   lkrg_opts="smep_enforce=0 $lkrg_opts"
+fi
+
 if command -v vboxmanage &>/dev/null ; then
    ## https://forums.whonix.org/t/linux-kernel-runtime-guard-lkrg-linux-kernel-runtime-integrity-checking-and-exploit-detection/8477/32
    ## https://www.openwall.com/lists/lkrg-users/2020/01/24/2
    ## https://www.openwall.com/lists/lkrg-users/2020/01/25/2
-   modprobe p_lkrg msr_validate=0 pcfi_validate=1
-else
-   modprobe p_lkrg
+   lkrg_opts="msr_validate=0 pcfi_validate=1 $lkrg_opts"
 fi
+
+modprobe p_lkrg $lkrg_opts
