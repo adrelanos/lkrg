@@ -65,6 +65,7 @@
 #include <linux/stacktrace.h>
 #include <asm/stacktrace.h>
 #include <asm/tlbflush.h>
+#include <asm/unwind.h>
 
 //#define p_lkrg_read_only __attribute__((__section__(".data..p_lkrg_read_only"),aligned(PAGE_SIZE)))
 #define __p_lkrg_read_only __attribute__((__section__(".p_lkrg_read_only")))
@@ -156,7 +157,7 @@ typedef struct _p_lkrg_global_symbols_structure {
 
 typedef struct _p_lkrg_critical_variables {
 
-   unsigned long p_pcfi_CPU_flags;
+   unsigned long p_dummy1;
 
 } p_lkrg_critical_var;
 
