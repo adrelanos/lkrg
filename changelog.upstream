@@ -1,8 +1,60 @@
+commit 8780cd0df7b916ef5438f3b19f1899d5974e845c
+Merge: 2b996ab 6bef8f5
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 6 13:48:44 2020 -0400
+
+    Merge remote-tracking branch 'adam/master'
+
+commit 6bef8f5ee2412cd66b9861a411f1b59af87ea6b0
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun May 3 20:12:10 2020 -0400
+
+    Revert 186608db6963fd0a83042bce3568c61e392f4b44. Some SL*B allocators do not allow to delete/shutdown cache under IRQs being disabled. In such case we can hit BUG_ON()
+
+commit 2aef4330d975b65bfd23c1c6d6e8feacd6e7eccc
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun May 3 14:47:44 2020 -0400
+
+    Change SMEP enforcement/validation logic
+
+commit c8e18884a6bb18b4ddcccfd9c2776e4c3472392f
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri May 1 21:59:28 2020 -0400
+
+    Introduce LKRG's tasks integrity database locking API
+
+commit 2b996ab1e3aebf1ca5bb8ad4cfef5a230fe29e7e
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri May 1 13:41:37 2020 -0400
+
+    bumped changelog version
+
 commit bfeb1732e651ff0cc61273e1597b6a405885d69a
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Fri May 1 13:41:18 2020 -0400
 
     update options names as per upstream changes
+
+commit 2daf922b6f5b048f3b33c3731c1ad36c4ed40c1e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Apr 30 11:25:53 2020 -0400
+
+    [1] Add support for pCFI stackwalk when CONFIG_UNWINDER_ORC is enabled
+    [2] Whitelist true/false binaries
+    [3] Modify the logic when stack-page is updated
+    [4] Add __scm_send hook to verify creds on SCM_CREDENTIALS
+
+commit 5278bebd45298e1ebae282b566b1cca658da572f
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Apr 28 14:20:26 2020 -0400
+
+    Add _trylock() in the ttwu_do_wakeup and __queue_work hook
+
+commit 186608db6963fd0a83042bce3568c61e392f4b44
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Apr 27 21:10:11 2020 -0400
+
+    Update p_delete_rb_ed_pids() to use IRQ-save locks
 
 commit e3ba276170be26efc78c3827626368eaee4b6f04
 Author: Patrick Schleizer <adrelanos@riseup.net>
