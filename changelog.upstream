@@ -1,3 +1,19 @@
+commit 54cbae96c97127b8b8ee654e44d5869ad90adf4c
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 6 14:57:11 2020 -0400
+
+    set smep_enforce=0 if SMEP not available
+    
+    allow appending lkrg_opts kernel paramaters
+    
+    allow replacing whole lkrg invocation through lkrg_exec
+
+commit d4e89a21e78f7d7e994e963a9bb6e9977a02a871
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 6 13:49:03 2020 -0400
+
+    bumped changelog version
+
 commit 8780cd0df7b916ef5438f3b19f1899d5974e845c
 Merge: 2b996ab 6bef8f5
 Author: Patrick Schleizer <adrelanos@riseup.net>
