@@ -1,3 +1,52 @@
+commit 033092d4384f166d5c64de22d58d54be31091f7e
+Merge: 5b87797 517961f
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun May 10 04:47:46 2020 -0400
+
+    Merge remote-tracking branch 'adam/master'
+
+commit 517961fd438928448d79043c28733d72228b2039
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat May 9 20:02:21 2020 -0400
+
+    Add "/sbin/bridge-stp" to whitelisted UMH
+
+commit b3694bfc2acf95a5c9ca44a9e6e7fd3717616a5c
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat May 9 19:56:58 2020 -0400
+
+    When LKRG is configured to allow only whitelisted executables to be run by UMH, we might be in the situation of overwriting RO page. Add support for that
+
+commit 4ca6cacbbac5a97bf867cbdce56b1fc0415c4e06
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat May 9 17:21:08 2020 -0400
+
+    Fix typo
+
+commit 4da623e51ec81dcc8ffe62e2512189887056b38f
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat May 9 16:39:50 2020 -0400
+
+    Change WARN info when 'ovl_create_or_link' can't be hooked.
+
+commit 404a3aef320f8524a5d2a5a9df0d837658b4b433
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat May 9 15:43:43 2020 -0400
+
+    Mariusz Zaborski and Patrick Schleizer pointed out that LKRG generates kernel panic when SMEP is not supported on x86. Such problem occure after the 2aef433. This commit fixes that issue.
+
+commit fe54765efb1dfba74ee5866a415ab9c90ac8a365
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat May 9 14:30:11 2020 -0400
+
+    Refactor LKRG process tracking DB. Instead of relying on 1 global spinlock, now we have multiple RW-locks. This commit introduces 512 buckets of RB-trees + RW-locks. This commit significantly increases performance.
+
+commit 5b87797df7f20736de8a0489dfa20a0bb4dc5932
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 6 14:59:55 2020 -0400
+
+    bumped changelog version
+
 commit 54cbae96c97127b8b8ee654e44d5869ad90adf4c
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Wed May 6 14:57:11 2020 -0400
