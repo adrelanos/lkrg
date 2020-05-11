@@ -24,4 +24,8 @@ if command -v vboxmanage &>/dev/null ; then
    lkrg_opts="msr_validate=0 pcfi_validate=1 $lkrg_opts"
 fi
 
+echo "INFO: Running 'modprobe p_lkrg $lkrg_opts' ..."
+
 modprobe p_lkrg $lkrg_opts
+
+echo "INFO: Done running modprobe, ok."
