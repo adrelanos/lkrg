@@ -17,10 +17,6 @@ fi
 ## Append required kernel parameters to $lkrg_opts but allow to user setting
 ## to append to $lkrg_opts.
 
-if ! cat /proc/cpuinfo | grep --quiet smep ; then
-   lkrg_opts="smep_enforce=0 $lkrg_opts"
-fi
-
 if command -v vboxmanage &>/dev/null ; then
    ## https://forums.whonix.org/t/linux-kernel-runtime-guard-lkrg-linux-kernel-runtime-integrity-checking-and-exploit-detection/8477/32
    ## https://www.openwall.com/lists/lkrg-users/2020/01/24/2
