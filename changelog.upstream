@@ -1,3 +1,21 @@
+commit 5024b3f8531ac6b7c29e79a3f984753c946ed39d
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon May 11 07:44:34 2020 -0400
+
+    output
+
+commit 08c7efa96307f1e6f7df3643813e4f6079c92aa0
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon May 11 07:42:51 2020 -0400
+
+    setting smep_enforce=0 manually no longer required since LKRG fixed that upstream
+
+commit 0382902941cb689cb09d7cbfb6a6123aa076109b
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sun May 10 04:56:35 2020 -0400
+
+    bumped changelog version
+
 commit 033092d4384f166d5c64de22d58d54be31091f7e
 Merge: 5b87797 517961f
 Author: Patrick Schleizer <adrelanos@riseup.net>
