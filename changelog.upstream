@@ -1,3 +1,46 @@
+commit c0d4eb15b85ecec9d90e6058ee41b19cbf1dd531
+Merge: 98f8c9c 8c1a55f
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Thu May 14 05:53:30 2020 -0400
+
+    Merge remote-tracking branch 'adam/master'
+
+commit 8c1a55f7e0105656802d290fc7240c894eb904e0
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed May 13 17:38:19 2020 -0400
+
+    Improve performance for flag validation
+
+commit 01bfa8e9531a815fcd4a1bcbd21d1e503024b2fc
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue May 12 14:41:20 2020 -0400
+
+    [1] Change *_JUMP_LABEL log information from WARN -> INFO
+    [2] Fix compilation warning (const qualifier)
+
+commit 2ac6980b9cdd49d5527cf60b64542c437b4eb7b6
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue May 12 04:22:27 2020 +0000
+
+    Fix type. Add 'const' qualifier
+
+commit 58f55874caede6c82dd895d41e267e34bb495a9c
+Merge: 3923eec 51de292
+Author: Mariusz Zaborski <oshogbo.vx@gmail.com>
+Date:   Tue May 12 04:01:56 2020 +0000
+
+    Merged in oshogbo/lkrg-osho/refactor (pull request #5)
+    
+    Refactor the syscall hooks.
+    
+    Approved-by: pi3 <pi3@pi3.com.pl>
+
+commit 98f8c9c12da877fddf1aab46cc6260ae844b46da
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon May 11 07:50:58 2020 -0400
+
+    bumped changelog version
+
 commit 5024b3f8531ac6b7c29e79a3f984753c946ed39d
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Mon May 11 07:44:34 2020 -0400
@@ -9,6 +52,53 @@ Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Mon May 11 07:42:51 2020 -0400
 
     setting smep_enforce=0 manually no longer required since LKRG fixed that upstream
+
+commit 51de292a73bcde44ac05e2f7f37db610468d67e7
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Mon May 4 20:55:58 2020 +0200
+
+    Remove rest of the duplicated code.
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit 6a670f48a6e67b138b3de0be87cf92b3dd1fdf8c
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Mon May 4 20:47:27 2020 +0200
+
+    Add macro to genereate install func.
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit cf7ac2f3217bad020991f692e64ddb4c2a9a51f4
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Mon May 4 20:37:42 2020 +0200
+
+    Simplify install/uninstall functions.
+    
+    This deduplicate a lot of code.
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit ea08cd0414f454e53d1a0ce3155fd354ca4923b2
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Mon May 4 16:48:38 2020 +0200
+
+    Simplify the initialization of the hooks.
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit 3923eec14e6bc207872bfcfc8359f22f0565e1ff
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun May 10 16:56:47 2020 -0400
+
+    Add SMAP bit verification logic (x86 arch). It is guarded in the same way as SMEP. Two new LKRG sysctl interface are introduced to control verification and enforcement logic:
+       1) Introduce 'smap_validate' to control if SMAP validation will be performed
+           0 - disable SMAP validation
+           1 - enable SMAP validation
+       6) Introduce 'smap_enforce' to control how LKRG reacts when SMAP validation fails:
+           0 - log & accept
+           1 - log & restore
+           2 - panic() - kill the kernel
 
 commit 0382902941cb689cb09d7cbfb6a6123aa076109b
 Author: Patrick Schleizer <adrelanos@riseup.net>
