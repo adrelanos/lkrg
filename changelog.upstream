@@ -1,3 +1,45 @@
+commit 58e14e0c5e14fff44239cc9d48f770a62ec67e4e
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 20 11:32:28 2020 -0400
+
+    readme
+
+commit 8f7c2594ec096ba6285acf1ae357542131166014
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 20 11:32:08 2020 -0400
+
+    description
+
+commit dc0cd31368498d1f414954e0ed2e7c1d81634ae8
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 20 11:31:37 2020 -0400
+
+    readme
+
+commit c41f6c1e237340497fdbb64403dee9ed59db87af
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 20 11:26:24 2020 -0400
+
+    description
+
+commit 0e1e3539e27a6ce3a7ccb730e098aca29a2203c4
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 20 11:24:32 2020 -0400
+
+    description
+
+commit eaad945304d3468e49f3b0a1cf5f84e1c8664755
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 20 11:15:36 2020 -0400
+
+    set `msr_validate=0` for KVM / QEMU
+
+commit 1523cbc0d3a4d63d40112e7c63a0dbd2a54b4dbb
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Thu May 14 06:51:40 2020 -0400
+
+    bumped changelog version
+
 commit c0d4eb15b85ecec9d90e6058ee41b19cbf1dd531
 Merge: 98f8c9c 8c1a55f
 Author: Patrick Schleizer <adrelanos@riseup.net>
