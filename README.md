@@ -13,13 +13,13 @@ No changes to or review of the core source code of LKRG.
 The software fork source code can be found here. [9]
 Original LKRG upstream can be found here. [10]
 
-[4] https://en.wikipedia.org/wiki/Fork_(software_development)
-[5] https://www.whonix.org
-[6] https://www.whonix.org/wiki/Kicksecure
-[7] https://www.debian.org
-[8] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG
-[9] https://github.com/Whonix/lkrg
-[10] https://www.openwall.com/lkrg/
+* [4] https://en.wikipedia.org/wiki/Fork_(software_development)
+* [5] https://www.whonix.org
+* [6] https://www.whonix.org/wiki/Kicksecure
+* [7] https://www.debian.org
+* [8] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG
+* [9] https://github.com/Whonix/lkrg
+* [10] https://www.openwall.com/lkrg/
 
 This metapackage depends lkrg-dkms.
 ## How to install `lkrg` using apt-get ##
