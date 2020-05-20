@@ -5,11 +5,6 @@ Linux Kernel Runtime Integrity Checking and Exploit Detection.
 LKRG provides security through diversity.
 Similar to running an uncommon operating system (kernel) would.
 
-It renders whole classes of kernel exploits ineffective. Makes other
-exploits less reliable and more difficult to write (see features [1]
-and security [2]). LKRG was developed by a security professional with
-review from other high profile security professionals (see authorship [3]).
-
 This is a lightweight software fork [4] of LKRG, with a focus on easy
 installation, added user documentation, and integration with Whonix [5],
 Kicksecure [6], Debian [7], and other distributions.
@@ -18,9 +13,6 @@ No changes to or review of the core source code of LKRG.
 The software fork source code can be found here. [9]
 Original LKRG upstream can be found here. [10]
 
-[1] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG#features
-[2] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG#security
-[3] https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG#Authorship
 [4] https://en.wikipedia.org/wiki/Fork_(software_development)
 [5] https://www.whonix.org
 [6] https://www.whonix.org/wiki/Kicksecure
@@ -64,13 +56,18 @@ sudo apt-get update
 sudo apt-get install lkrg
 ```
 
-## How to Build deb Package ##
+## How to Build deb Package from Source Code ##
 
-Any standard Debian build tools can be used. For example. Quick and easy.
+Can be build using standard Debian package build tools such as:
 
 ```
 dpkg-buildpackage -b
 ```
+
+See instructions. (Replace `generic-package` with the actual name of this package `lkrg`.)
+
+* **A)** [easy](https://www.whonix.org/wiki/Dev/Build_Documentation/generic-package/easy), _OR_
+* **B)** [including verifying software signatures](https://www.whonix.org/wiki/Dev/Build_Documentation/generic-package)
 
 ## Contact ##
 
