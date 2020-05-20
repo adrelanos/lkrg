@@ -22,6 +22,14 @@ if command -v vboxmanage &>/dev/null ; then
    ## https://www.openwall.com/lists/lkrg-users/2020/01/24/2
    ## https://www.openwall.com/lists/lkrg-users/2020/01/25/2
    lkrg_opts="msr_validate=0 pcfi_validate=1 $lkrg_opts"
+elif command -v kvm &>/dev/null ; then
+   ## Adam:
+   ## For other hypervisors like KVM/qemu you can keep pcfi_validate=2 and only set
+   ## msr_validate=0 (This hypervisor don't do such nasty calls like VirtualBox).
+   lkrg_opts="msr_validate=0 $lkrg_opts"
+   ## check if there is any binary in /usr/bin matching 'qemu*'
+elif dpkg-query --show "qemu-system" &>/dev/null ; then
+   lkrg_opts="msr_validate=0 $lkrg_opts"
 fi
 
 echo "INFO: Running 'modprobe p_lkrg $lkrg_opts' ..."
