@@ -1,3 +1,19 @@
+commit 138f679dec7960396dc4ad995dd31743d2cb16a2
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Fri Jun 5 15:01:41 2020 -0400
+
+    move header package from Depends: to Recommends:
+    
+    fixes https://github.com/Whonix/lkrg/issues/2#issuecomment-637159669
+    
+    Thanks to @morfikov for the bug report!
+
+commit ab7d10737eab31045112c5421f853e35a9db367d
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed May 20 11:35:51 2020 -0400
+
+    bumped changelog version
+
 commit 58e14e0c5e14fff44239cc9d48f770a62ec67e4e
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Wed May 20 11:32:28 2020 -0400
