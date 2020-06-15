@@ -40,8 +40,7 @@ Description: Linux Kernel Runtime Guard (LKRG)
 
 Package: lkrg-dkms
 Architecture: linux-amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Recommends: linux-headers-amd64 [linux-amd64] | linux-headers-generic
+Depends: dkms, ${shlibs:Depends}, ${misc:Depends}
 Description: Linux Kernel Runtime Guard (LKRG) Source Code and DKMS
  Linux Kernel Runtime Integrity Checking and Exploit Detection.
  .
