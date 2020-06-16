@@ -1,3 +1,21 @@
+commit 4e9d5b5f7bf524cfad86022ad666c037dec508b4
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Mon Jun 15 14:45:23 2020 -0400
+
+    add `Depends: dkms`
+    
+    remove `Recommends: linux-headers-amd64 [linux-amd64] | linux-headers-generic`
+    
+    more similar to wireguard package as far as `Depends:` and `Recommends:`
+    
+    https://github.com/Whonix/lkrg/issues/2#issuecomment-642102032
+
+commit 9e64bf8b0547126239f9e0573e99081c8b5b5c56
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sat Jun 6 08:30:34 2020 -0400
+
+    bumped changelog version
+
 commit 138f679dec7960396dc4ad995dd31743d2cb16a2
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Fri Jun 5 15:01:41 2020 -0400
