@@ -23,7 +23,7 @@ unsigned int block_modules = 0;
 unsigned int interval = 15;
 unsigned int kint_validate = 3;
 unsigned int kint_enforce = 2;
-unsigned int msr_validate = 1;
+unsigned int msr_validate = 0;
 unsigned int pint_validate = 2;
 unsigned int pint_enforce = 1;
 unsigned int pcfi_validate = 2;
@@ -36,6 +36,9 @@ unsigned int smep_enforce = 2;
 unsigned int smap_validate = 1;
 unsigned int smap_enforce = 2;
 #endif
+unsigned int profile_validate = 3;
+unsigned int profile_enforce = 2;
+
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,10,0)
 static enum cpuhp_state p_hot_cpus;
@@ -61,15 +64,18 @@ p_ro_page p_ro __p_lkrg_read_only = {
       .p_heartbeat = 0,                   // heartbeat
 #if defined(CONFIG_X86)
       .p_smep_validate = 1,               // smep_validate
-      .p_smep_enforce = 0,                // smep_enforce
+      .p_smep_enforce = 2,                // smep_enforce
       .p_smap_validate = 1,               // smap_validate
-      .p_smap_enforce = 0,                // smap_enforce
+      .p_smap_enforce = 2,                // smap_enforce
 #endif
       .p_umh_validate = 1,                // umh_validate
       .p_umh_enforce = 1,                 // umh_enforce
-      .p_msr_validate = 1,                // msr_validate
+      .p_msr_validate = 0,                // msr_validate
       .p_pcfi_validate = 2,               // pcfi_validate
-      .p_pcfi_enforce = 1                 // pcfi_enforce
+      .p_pcfi_enforce = 1,                // pcfi_enforce
+      /* Profiles */
+      .p_profile_validate = 3,            // profile_validate
+      .p_profile_enforce = 2              // profile_enforce
    },
 
 #if !defined(CONFIG_ARM)
@@ -198,8 +204,8 @@ void p_uninit_page_attr(void) {
 void p_parse_module_params(void) {
 
    /* Interval */
-   if (interval > 0x708) {
-      P_CTRL(p_interval) = 0x708;      // Max
+   if (interval > 1800) {
+      P_CTRL(p_interval) = 1800;       // Max
    } else if (interval < 5) {
       P_CTRL(p_interval) = 5;          // Min
    } else {
@@ -230,85 +236,107 @@ void p_parse_module_params(void) {
    /* kint_validate */
    if (kint_validate > 3) {
       P_CTRL(p_kint_validate) = 3;
-   } else {
+      P_CTRL(p_profile_validate) = 0x9;
+   } else if (P_CTRL(p_kint_validate) != kint_validate) {
       P_CTRL(p_kint_validate) = kint_validate;
+      P_CTRL(p_profile_validate) = 0x9;
    }
 
    /* kint_enforce */
    if (kint_enforce > 2) {
       P_CTRL(p_kint_enforce) = 2;
-   } else {
+      P_CTRL(p_profile_enforce) = 0x9;
+   } else if (P_CTRL(p_kint_enforce) != kint_enforce) {
       P_CTRL(p_kint_enforce) = kint_enforce;
+      P_CTRL(p_profile_enforce) = 0x9;
    }
 
    /* msr_validate */
    if (msr_validate > 1) {
       P_CTRL(p_msr_validate) = 1;
-   } else {
+      P_CTRL(p_profile_validate) = 0x9;
+   } else if (P_CTRL(p_msr_validate) != msr_validate) {
       P_CTRL(p_msr_validate) = msr_validate;
+      P_CTRL(p_profile_validate) = 0x9;
    }
 
    /* pint_validate */
    if (pint_validate > 3) {
       P_CTRL(p_pint_validate) = 3;
-   } else {
+      P_CTRL(p_profile_validate) = 0x9;
+   } else if (P_CTRL(p_pint_validate) != pint_validate) {
       P_CTRL(p_pint_validate) = pint_validate;
+      P_CTRL(p_profile_validate) = 0x9;
    }
 
    /* pint_enforce */
    if (pint_enforce > 2) {
       P_CTRL(p_pint_enforce) = 2;
-   } else {
+      P_CTRL(p_profile_enforce) = 0x9;
+   } else if (P_CTRL(p_pint_enforce) != pint_enforce) {
       P_CTRL(p_pint_enforce) = pint_enforce;
+      P_CTRL(p_profile_enforce) = 0x9;
    }
 
    /* umh_validate */
    if (umh_validate > 2) {
       P_CTRL(p_umh_validate) = 2;
-   } else {
+      P_CTRL(p_profile_validate) = 0x9;
+   } else if (P_CTRL(p_umh_validate) != umh_validate) {
       P_CTRL(p_umh_validate) = umh_validate;
+      P_CTRL(p_profile_validate) = 0x9;
    }
 
    /* umh_enforce */
    if (umh_enforce > 2) {
       P_CTRL(p_umh_enforce) = 2;
-   } else {
+      P_CTRL(p_profile_enforce) = 0x9;
+   } else if (P_CTRL(p_umh_enforce) != umh_enforce) {
       P_CTRL(p_umh_enforce) = umh_enforce;
+      P_CTRL(p_profile_enforce) = 0x9;
    }
 
    /* pcfi_validate */
    if (pcfi_validate > 2) {
       P_CTRL(p_pcfi_validate) = 2;
-   } else {
+      P_CTRL(p_profile_validate) = 0x9;
+   } else if (P_CTRL(p_pcfi_validate) != pcfi_validate) {
       P_CTRL(p_pcfi_validate) = pcfi_validate;
+      P_CTRL(p_profile_validate) = 0x9;
    }
 
    /* pcfi_enforce */
    if (pcfi_enforce > 2) {
       P_CTRL(p_pcfi_enforce) = 2;
-   } else {
+      P_CTRL(p_profile_enforce) = 0x9;
+   } else if (P_CTRL(p_pcfi_enforce) != pcfi_enforce) {
       P_CTRL(p_pcfi_enforce) = pcfi_enforce;
+      P_CTRL(p_profile_enforce) = 0x9;
    }
 
    p_pcfi_CPU_flags = 0x0;
 
 #if defined(CONFIG_X86)
 
-   if (cpu_has(&cpu_data(smp_processor_id()), X86_FEATURE_SMEP)) {
+   if (boot_cpu_has(X86_FEATURE_SMEP)) {
       P_ENABLE_SMEP_FLAG(p_pcfi_CPU_flags);
 
       /* smep_validate */
       if (smep_validate > 1) {
          P_CTRL(p_smep_validate) = 1;
-      } else {
+         P_CTRL(p_profile_validate) = 0x9;
+      } else if (P_CTRL(p_smep_validate) != smep_validate) {
          P_CTRL(p_smep_validate) = smep_validate;
+         P_CTRL(p_profile_validate) = 0x9;
       }
 
       /* smep_enforce */
       if (smep_enforce > 2) {
          P_CTRL(p_smep_enforce) = 2;
-      } else {
+         P_CTRL(p_profile_enforce) = 0x9;
+      } else if (P_CTRL(p_smep_enforce) != smep_enforce) {
          P_CTRL(p_smep_enforce) = smep_enforce;
+         P_CTRL(p_profile_enforce) = 0x9;
       }
    } else {
       P_CTRL(p_smep_validate) = 0x0;
@@ -317,21 +345,25 @@ void p_parse_module_params(void) {
             "System does NOT support SMEP. LKRG can't enforce SMEP validation :(\n");
    }
 
-   if (cpu_has(&cpu_data(smp_processor_id()), X86_FEATURE_SMAP)) {
+   if (boot_cpu_has(X86_FEATURE_SMAP)) {
       P_ENABLE_SMAP_FLAG(p_pcfi_CPU_flags);
 
       /* smap_validate */
       if (smap_validate > 1) {
          P_CTRL(p_smap_validate) = 1;
-      } else {
+         P_CTRL(p_profile_validate) = 0x9;
+      } else if (P_CTRL(p_smap_validate) != smap_validate) {
          P_CTRL(p_smap_validate) = smap_validate;
+         P_CTRL(p_profile_validate) = 0x9;
       }
 
       /* smap_enforce */
       if (smap_enforce > 2) {
          P_CTRL(p_smap_enforce) = 2;
-      } else {
+         P_CTRL(p_profile_enforce) = 0x9;
+      } else if (P_CTRL(p_smap_enforce) != smap_enforce) {
          P_CTRL(p_smap_enforce) = smap_enforce;
+         P_CTRL(p_profile_enforce) = 0x9;
       }
    } else {
       P_CTRL(p_smap_validate) = 0x0;
@@ -528,6 +560,9 @@ static int __init p_lkrg_register(void) {
 p_main_error:
 
    if (p_ret != P_LKRG_SUCCESS) {
+      P_CTRL(p_kint_validate) = 0;
+      p_deregister_notifiers();
+      del_timer_sync(&p_timer);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0)
       if (p_cpu)
@@ -578,12 +613,15 @@ static void __exit p_lkrg_deregister(void) {
 
    p_uninit_page_attr();
 
+   P_CTRL(p_kint_validate) = 0;
+   p_deregister_notifiers();
+   del_timer_sync(&p_timer);
+
+
    // Freeze all non-kernel processes
    while (P_SYM(p_freeze_processes)())
       schedule();
 
-   del_timer_sync(&p_timer);
-   p_deregister_notifiers();
    p_deregister_comm_channel();
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
@@ -630,13 +668,13 @@ MODULE_PARM_DESC(kint_validate, "kint_validate [3 (periodically + random events)
 module_param(kint_enforce, uint, 0000);
 MODULE_PARM_DESC(kint_enforce, "kint_enforce [2 (panic) is default]");
 module_param(msr_validate, uint, 0000);
-MODULE_PARM_DESC(msr_validate, "msr_validate [1 (enabled) is default]");
+MODULE_PARM_DESC(msr_validate, "msr_validate [0 (disabled) is default]");
 module_param(pint_validate, uint, 0000);
-MODULE_PARM_DESC(pint_validate, "pint_validate [2 (current + waking_up) is default]");
+MODULE_PARM_DESC(pint_validate, "pint_validate [2 (current + waking up) is default]");
 module_param(pint_enforce, uint, 0000);
 MODULE_PARM_DESC(pint_enforce, "pint_enforce [1 (kill task) is default]");
 module_param(umh_validate, uint, 0000);
-MODULE_PARM_DESC(umh_validate, "umh_validate [1 (whitelist UMH paths) is default]");
+MODULE_PARM_DESC(umh_validate, "umh_validate [1 (allow specific paths) is default]");
 module_param(umh_enforce, uint, 0000);
 MODULE_PARM_DESC(umh_enforce, "umh_enforce [1 (prevent execution) is default]");
 module_param(pcfi_validate, uint, 0000);

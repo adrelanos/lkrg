@@ -65,7 +65,7 @@
 #include <linux/stacktrace.h>
 #include <asm/stacktrace.h>
 #include <asm/tlbflush.h>
-#if defined(CONFIG_X86)
+#if defined(CONFIG_X86) && defined(CONFIG_UNWINDER_ORC)
 #include <asm/unwind.h>
 #endif
 
@@ -80,29 +80,36 @@
  #define P_LKRG_MARKER2 0xdeadbabe
 #endif
 
+#define nitems(val)      (sizeof(val) / sizeof(val[0]))
+
 typedef struct _p_lkrg_global_conf_structure {
 
-   unsigned int p_kint_validate;
-   unsigned int p_kint_enforce;
-   unsigned int p_pint_validate;
-   unsigned int p_pint_enforce;
-   unsigned int p_interval;
-   unsigned int p_log_level;
-   unsigned int p_trigger;
-   unsigned int p_block_modules;
-   unsigned int p_hide_lkrg;
-   unsigned int p_heartbeat;
 #if defined(CONFIG_X86)
    unsigned int p_smep_validate;
-   unsigned int p_smep_enforce;
    unsigned int p_smap_validate;
+#endif
+   unsigned int p_pcfi_validate;
+   unsigned int p_pint_validate;
+   unsigned int p_kint_validate;
+   unsigned int p_log_level;
+   unsigned int p_block_modules;
+   unsigned int p_msr_validate;
+   unsigned int p_heartbeat;
+   unsigned int p_interval;
+   unsigned int p_umh_validate;
+#if defined(CONFIG_X86)
+   unsigned int p_smep_enforce;
    unsigned int p_smap_enforce;
 #endif
-   unsigned int p_umh_validate;
-   unsigned int p_umh_enforce;
-   unsigned int p_msr_validate;
-   unsigned int p_pcfi_validate;
    unsigned int p_pcfi_enforce;
+   unsigned int p_pint_enforce;
+   unsigned int p_kint_enforce;
+   unsigned int p_trigger;
+   unsigned int p_hide_lkrg;
+   unsigned int p_umh_enforce;
+   /* Profiles */
+   unsigned int p_profile_validate;
+   unsigned int p_profile_enforce;
 
 } p_lkrg_global_conf_struct;
 
@@ -156,6 +163,7 @@ typedef struct _p_lkrg_global_symbols_structure {
    struct mutex *p_kernfs_mutex;
 #endif
    struct kset **p_module_kset;
+   int (*p_kallsyms_on_each_symbol)(int (*)(void *, const char *, struct module *, unsigned long), void *);
    struct module *p_find_me;
 
 } p_lkrg_global_syms;
@@ -222,11 +230,35 @@ extern p_ro_page p_ro;
  * Exploit Detection
  */
 #include "modules/exploit_detection/p_exploit_detection.h"
-#include "modules/exploit_detection/syscalls/p_install.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
  #define __GFP_REPEAT   ((__force gfp_t)___GFP_RETRY_MAYFAIL)
 #endif
 
+#if !defined(CONFIG_KPROBES)
+ #error "LKRG requires CONFIG_KPROBES"
+#elif !defined(CONFIG_HAVE_KRETPROBES)
+ #error "CONFIG_KPROBES is enabled, however CONFIG_HAVE_KRETPROBES is not found. LKRG requires both."
+#endif
+
+#if !defined(CONFIG_MODULE_UNLOAD)
+ #error "LKRG requires CONFIG_MODULE_UNLOAD"
+#endif
+
+#if !defined(CONFIG_KALLSYMS_ALL)
+ #error "LKRG requires CONFIG_KALLSYMS_ALL"
+#endif
+
+#if !defined(CONFIG_JUMP_LABEL)
+ #error "LKRG requires CONFIG_JUMP_LABEL"
+#endif
+
+#if !defined(CONFIG_STACKTRACE)
+/*
+ * A #warning in this header file would be printed too many times during build,
+ * so let's only do that for something truly important, which the below is not.
+ */
+// #warning "LKRG does NOT require CONFIG_STACKTRACE. However, in case of pCFI violation, LKRG won't be able to dump full stack-trace."
+#endif
 
 #endif
