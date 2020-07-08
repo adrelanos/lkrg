@@ -1,3 +1,162 @@
+commit 8ae4d9b1762598233aeff97090aaf2351b20a194
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed Jul 8 13:12:18 2020 -0400
+
+    bump to 0.8.1
+
+commit a8391da0da021be8dd92dcfe0ad9f572949b2420
+Merge: 8c22388 4e1dfeb
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed Jul 8 13:10:53 2020 -0400
+
+    Merge remote-tracking branch 'adam/master'
+
+commit 4e1dfeb2d16d0f3ea831d9645f16380f6d5d99fe
+Author: Solar Designer <solar@openwall.com>
+Date:   Wed Jul 8 16:58:54 2020 +0200
+
+    Documentation update for 0.8.1
+
+commit cfe3bf406ec37d7085e86c2ee0461aca7ab2f773
+Author: Solar Designer <solar@openwall.com>
+Date:   Wed Jul 8 16:36:28 2020 +0200
+
+    No longer ask people to contact us for no-CONFIG_JUMP_LABEL support
+
+commit ccd71872c5f767b418ffd40b6c113c4ee455df03
+Author: Solar Designer <solar@openwall.com>
+Date:   Wed Jul 8 15:26:20 2020 +0200
+
+    Drop init_module() and delete_module() syscall hooks
+
+commit b3a499e7f6071e00338f173b2c614227e810397e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Jul 4 16:11:17 2020 -0400
+
+    Fix user-triggerable Oops (dereference of a near-NULL pointer) on newer kernels with new syscall implementation.  Found by Jason A. Donenfeld.
+
+commit ec595f555bcb9b81a1782d9e2c9651a8abf45aab
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jun 30 12:11:10 2020 -0400
+
+    It was reported that in a very slow devices, some of the busy loop of locking/unlocking text_mutext is too tight and optimize_kprobe() can't win the race of getting text_mutex. This simple patch helps to solve that problem.
+
+commit fb1ee76d087a25d4dd3c54197358aee4040f2b84
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jun 25 14:55:03 2020 -0400
+
+    Update PERFORMANCE file with benchmark from Phoronix
+
+commit 7b57b5ccb1dd5d87d0588af218b83bb4fca12078
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jun 25 12:05:37 2020 -0400
+
+    More updates for CHANGES file
+
+commit 93e6dffbfa21fce9b8311243846f60a8daa9f671
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jun 25 10:43:05 2020 -0400
+
+    Update CHANGES file
+
+commit e0d449c82fee5926f780f2b1add66e36bc55c8b3
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jun 24 18:08:02 2020 -0400
+
+    Update README file
+
+commit 7ee25605d5ca8c7f8c91e1ea48b039c352514713
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jun 23 18:19:32 2020 -0400
+
+    Rename profile names
+
+commit 73ec77654ff1ca7260bb853d0556602dc5aad7bf
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jun 23 14:47:48 2020 -0400
+
+    Make msr_validate=1 only in paranoid profile
+
+commit 07eb00cee146f9eb1c5477172bb7bf47f571afbd
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Jun 22 19:00:28 2020 -0400
+
+    Before leaving process integrity verification routine in paranoid mode, verify current task
+
+commit 40b0570dae687916d9a286d58d914f08c61403b0
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Jun 22 17:15:46 2020 -0400
+
+    Updates for README and LICENSE files
+
+commit 9d78b4f2273085df48b7fcd5028d7986a8479e44
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Jun 22 10:55:31 2020 -0400
+
+    Add 'ConditionKernelCommandLine' to lkrg.service file. Now you can disable LKRG service from kernel boot parameter using 'nolkrg' option
+
+commit e855fb804107e4943bae6de1da62384e8b522423
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Jun 21 18:24:41 2020 -0400
+
+    Update lkrg.service file for systemd. Thanks goes to Mikhail Morfikov
+
+commit 8e4d93380e1c686c04fc354b1b5caa0053b29c79
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Jun 21 12:46:23 2020 -0400
+
+    Set default knobs and profile values to: profile_validate=3 and profile_enforce=2
+
+commit 1b4da340d5ea1585cd364c22043e68c74e992150
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Jun 21 11:52:48 2020 -0400
+
+    [1] Add CONCEPTS file
+    [2] Update LICENSE, PATREONS and README files
+
+commit 97cb12a801c4bc6dd0b189157d71e3c01a10cf5b
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Jun 19 13:20:39 2020 -0400
+
+    Cleanup commit
+
+commit bb3a3a9ec747c4b3713f2fe8bf4290550b3ab5c6
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jun 18 14:33:22 2020 -0400
+
+    Change the logic of detecting a situation when already blocked path sotred in memory is being reexecuted
+
+commit 44dc1bb72d8f6b1c80cfb89cc4c2800af2ff072d
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jun 17 13:43:59 2020 -0400
+
+    Minor fix
+
+commit 75f866d5ca5b0e11c149d2228282c54c88f31e64
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jun 17 13:10:34 2020 -0400
+
+    Minor fix on on-x86 platforms
+
+commit 5bbeaa2344e7d6384628a87e55de5733334f1481
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jun 16 17:52:04 2020 -0400
+
+    [1] Rename INSTALL -> README
+    [2] Update README
+
+commit b67e642ee6b1755e1d3fd213258a32b56eeb798f
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jun 16 17:45:33 2020 -0400
+
+    Remove misleading comments
+
+commit 8c22388ed2890d50a167566c44da134aa8a4690a
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Tue Jun 16 09:32:33 2020 -0400
+
+    bumped changelog version
+
 commit 4e9d5b5f7bf524cfad86022ad666c037dec508b4
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Mon Jun 15 14:45:23 2020 -0400
@@ -9,6 +168,48 @@ Date:   Mon Jun 15 14:45:23 2020 -0400
     more similar to wireguard package as far as `Depends:` and `Recommends:`
     
     https://github.com/Whonix/lkrg/issues/2#issuecomment-642102032
+
+commit 841bb4dc47a993b8dde6cafb88981e473d88ae8e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Jun 14 19:21:09 2020 -0400
+
+    unwind.h is not available on RHEL7 with old kernel(s). Fix it.
+
+commit a900c9fa41d5440e87b0d1b98efdc312e85647d8
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Jun 14 15:02:20 2020 -0400
+
+    [1] Change UMH messages to not be unnecessarily verbose and shouting.
+    [2] Take into account a special case situation when already blocked path sotred in memory is being reexecuted.
+
+commit 9b4dea13da64c28d89361be81972a02c72fee93d
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Jun 13 18:40:13 2020 -0400
+
+    Change log_level from ERR->WARN for ISRA / CONSPROP. Refactor when the logs are printed
+
+commit 72084d989a6156195692f2ae75bb4dcd9f5f434d
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Jun 12 17:58:05 2020 -0400
+
+    Add support for CONSTPROP optimized functions:
+          - Some of the functions might be optimized by CONSTPROP. However, some of the hooks can still be functional even under CONSTPROP optimized functions.
+
+commit cd624844598d61d2f164955e836aed7160aebac9
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jun 11 11:28:16 2020 -0400
+
+    Fix RB-tree deletion logic
+
+commit ee1263aa66d9a9a394d66838e585176ebc73c3bb
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jun 9 17:38:01 2020 -0400
+
+    [1] Change initialization logic for exploit detection module:
+      - Not all hooks are fatal. If for any reason non-fatal hook can't be placed, continue initialization and print appropriate message
+      - If hook is fatal, stop intialization
+    [2] Add support for ISRA optimized functions:
+      - Some of the functions might be optimized by ISRA. However, some of the hooks can still be functional even under ISRA optimized functions.
 
 commit 9e64bf8b0547126239f9e0573e99081c8b5b5c56
 Author: Patrick Schleizer <adrelanos@riseup.net>
@@ -25,6 +226,149 @@ Date:   Fri Jun 5 15:01:41 2020 -0400
     fixes https://github.com/Whonix/lkrg/issues/2#issuecomment-637159669
     
     Thanks to @morfikov for the bug report!
+
+commit 8e660501d87d18351f185abe058119cf9f8c6d7b
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jun 4 16:42:32 2020 -0400
+
+    [x86] Use Boot CPU to verify smXp flags
+
+commit 5ddb0617194e55b2fe723f2c218b9c8d50cedb71
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jun 4 13:37:14 2020 -0400
+
+    Fix hiding feature. This code was not correctly adopted to support newly introduced RO page
+
+commit c46108cec6178ec1e86d08a01b8563cb0ab78bd4
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jun 4 12:32:43 2020 -0400
+
+    Add verification whether specific CONFIG_* options are enabled
+
+commit d57b4c0f0e63d4d88761e098c53280967f2d1aec
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jun 3 16:28:30 2020 -0400
+
+    Since kernel 5.7 "kallsyms_lookup_name" and "kallsyms_on_each_symbol" functions are not exported. This patch (hack) retrives necessary function pointer
+
+commit d8869b0e85f99c16653033571444e729b85481fd
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jun 3 00:22:04 2020 -0400
+
+    Minor fixes - typos, spaces, formating, etc.
+
+commit 7a99c0c599241cfefc106dbcf9fa32f7810d3499
+Author: Mariusz Zaborski <oshogbo.vx@gmail.com>
+Date:   Wed Jun 3 03:34:30 2020 +0000
+
+    Merged in oshogbo/lkrg-osho/umh (pull request #6)
+    
+    Rework UMH.
+    
+    * Introduce nitems for nice array counting scheme.
+    
+    * Rework the umh whitelist.
+    
+        No functional changes intended.
+    
+    * Sort the UMH and remove dups.
+
+commit 0b0b46973905454ea32039fe8ee91c231a468bbf
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu May 28 02:22:04 2020 -0400
+
+    [1] Fix 'kint_validate = 1' logic
+    [2] Change timer delete logic
+
+commit 11da921d4196741b69f5156a9fd01be980141cb4
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed May 27 12:22:48 2020 -0400
+
+    Introduce 'profiles' configurable from the sysctl interfact:
+    
+     1) profile_validate:
+         a) 0 (Disabled):
+            -> kint_validate = 0 (Disabled)
+            -> pint_validate = 0 (Disabled)
+            -> pcfi_validate = 0 (Disabled)
+            -> umh_validate  = 0 (Disabled)
+            -> msr_validate  = 0 (Disabled)
+            -> smep_validate = 0 (Disabled)
+            -> smap_validate = 0 (Disabled)
+         b) 1 (Light):
+            -> kint_validate = 1 (Manual trigger only)
+            -> pint_validate = 1 (Current task only)
+            -> pcfi_validate = 1 (Weak pCFI)
+            -> umh_validate  = 1 (Whitelist)
+            -> msr_validate  = 0 (Disabled)
+            -> smep_validate = 1 (Enabled)
+            -> smap_validate = 1 (Enabled)
+         c) 2 (Balanced):
+            -> kint_validate = 2 (Triggered by timer)
+            -> pint_validate = 2 (Current + weaking up task)
+            -> pcfi_validate = 1 (Weak pCFI)
+            -> umh_validate  = 1 (Whitelist)
+            -> msr_validate  = 0 (Disabled)
+            -> smep_validate = 1 (Enabled)
+            -> smap_validate = 1 (Enabled)
+         d) 3 (Moderate):
+            -> kint_validate = 3 (Triggered by timer + random events)
+            -> pint_validate = 2 (Current + weaking up task)
+            -> pcfi_validate = 2 (Full pCFI)
+            -> umh_validate  = 1 (Whitelist)
+            -> msr_validate  = 1 (Enabled)
+            -> smep_validate = 1 (Enabled)
+            -> smap_validate = 1 (Enabled)
+         e) 4 (Heavy):
+            -> kint_validate = 3 (Triggered by timer + random events)
+            -> pint_validate = 3 (Paranoid mode - verify all tasks in the system by every hook)
+            -> pcfi_validate = 2 (Full pCFI)
+            -> umh_validate  = 2 (Full UMH lock-down)
+            -> msr_validate  = 1 (Enabled)
+            -> smep_validate = 1 (Enabled)
+            -> smap_validate = 1 (Enabled)
+    
+     2) profile_enforce:
+         a) 0 (Log & Accept):
+            -> kint_enforce = 0 (Log & accept)
+            -> pint_enforce = 0 (Log & accept)
+            -> pcfi_enforce = 0 (Log only)
+            -> umh_enforce  = 0 (Log only)
+            -> smep_enforce = 0 (Log & accept)
+            -> smap_enforce = 0 (Log & accept)
+         b) 1 (Balanced - selective panic):
+            -> kint_enforce = 1 (Log only)
+            -> pint_enforce = 1 (Kill task)
+            -> pcfi_enforce = 1 (Kill task)
+            -> umh_enforce  = 1 (Prevent execution)
+            -> smep_enforce = 2 (Panic)
+            -> smap_enforce = 2 (Panic)
+         c) 2 (Moderate - more panic):
+            -> kint_enforce = 2 (Panic)
+            -> pint_enforce = 1 (Kill task)
+            -> pcfi_enforce = 1 (Kill task)
+            -> umh_enforce  = 1 (Prevent execution)
+            -> smep_enforce = 2 (Panic)
+            -> smap_enforce = 2 (Panic)
+         d) 3 (Panic):
+            -> kint_enforce = 2 (Panic)
+            -> pint_enforce = 2 (Panic)
+            -> pcfi_enforce = 2 (Panic)
+            -> umh_enforce  = 2 (Panic)
+            -> smep_enforce = 2 (Panic)
+            -> smap_enforce = 2 (Panic)
+
+commit b1b11e99cf8c62a3aa2088438d6509e859aac917
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu May 21 15:16:53 2020 -0400
+
+    Group hot RO page settings into a cache line
+
+commit 5f691f632493ea220d228b3b289c187ade6c97d2
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed May 20 21:07:40 2020 -0400
+
+    Remove redundant checks for CPU bits
 
 commit ab7d10737eab31045112c5421f853e35a9db367d
 Author: Patrick Schleizer <adrelanos@riseup.net>
@@ -67,6 +411,42 @@ Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Wed May 20 11:15:36 2020 -0400
 
     set `msr_validate=0` for KVM / QEMU
+
+commit 37fa35e0cc641a2ec1013caa3036b08e63d261bf
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue May 19 21:40:53 2020 -0400
+
+    Fix typo
+
+commit 9077cae8b9f30d099d6586cc6bc42f7063626ecc
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon May 18 16:03:29 2020 -0400
+
+    Some more improvements regarding smXp validation
+
+commit dda846107a97b10337f60b63b85b9655a83f9fc5
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun May 17 20:23:10 2020 -0400
+
+    Fix logic from the previous PR
+
+commit 8639e0e5bf926aa3d0499e74354d1809d7ad2263
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun May 17 20:02:56 2020 -0400
+
+    Improve SMAP/SMEP/WP validation logic
+
+commit 228daef3262d8e7a52bafc048a7c9be727e350f7
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri May 15 22:44:18 2020 +0000
+
+    Remove redundant validation
+
+commit c2c27f077fa18b9fa2455b8acfe72950eb180026
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu May 14 20:53:09 2020 -0400
+
+    Add spinlock synchronizing UMH
 
 commit 1523cbc0d3a4d63d40112e7c63a0dbd2a54b4dbb
 Author: Patrick Schleizer <adrelanos@riseup.net>
