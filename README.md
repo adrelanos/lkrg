@@ -73,7 +73,3 @@ See instructions. (Replace `generic-package` with the actual name of this packag
 
 * [Free Forum Support](https://forums.whonix.org)
 * [Professional Support](https://www.whonix.org/wiki/Professional_Support)
-
-## Donate ##
-
-`lkrg` requires [donations](https://www.whonix.org/wiki/Donate) to stay alive!
