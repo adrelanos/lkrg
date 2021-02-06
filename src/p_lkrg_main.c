@@ -24,7 +24,7 @@ unsigned int interval = 15;
 unsigned int kint_validate = 3;
 unsigned int kint_enforce = 2;
 unsigned int msr_validate = 0;
-unsigned int pint_validate = 2;
+unsigned int pint_validate = 1;
 unsigned int pint_enforce = 1;
 unsigned int pcfi_validate = 2;
 unsigned int pcfi_enforce = 1;
@@ -43,7 +43,7 @@ unsigned int profile_enforce = 2;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,10,0)
 static enum cpuhp_state p_hot_cpus;
 #endif
-unsigned int p_attr_init = 0x0;
+unsigned int p_attr_init = 0;
 
 p_ro_page p_ro __p_lkrg_read_only = {
 
@@ -54,7 +54,7 @@ p_ro_page p_ro __p_lkrg_read_only = {
    .p_lkrg_global_ctrl.ctrl = {
       .p_kint_validate = 3,               // kint_validate
       .p_kint_enforce = 2,                // kint_enforce
-      .p_pint_validate = 2,               // pint_validate
+      .p_pint_validate = 1,               // pint_validate
       .p_pint_enforce = 1,                // pint_enforce
       .p_interval = 15,                   // interval
       .p_log_level = 3,                   // log_level
@@ -86,16 +86,12 @@ p_ro_page p_ro __p_lkrg_read_only = {
 };
 
 
-void p_init_page_attr(void) {
+static void p_init_page_attr(void) {
 
-   unsigned long *p_long_tmp = 0x0;
+   unsigned long *p_long_tmp = 0;
 #if !defined(CONFIG_ARM)
    unsigned long p_long_offset = PAGE_SIZE/sizeof(p_long_tmp); // On purpose sizeof pointer
 #endif
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_init_page_attr>\n");
 
    p_long_tmp = (unsigned long *)P_CTRL_ADDR;
 
@@ -105,6 +101,7 @@ void p_init_page_attr(void) {
       if (*(p_long_tmp+p_long_offset) == P_LKRG_MARKER1) {
          p_print_log(P_LKRG_INFO, "Found marker after configuration page.\n");
 #endif
+         P_SYM(p_state_init) = 2;
          p_set_memory_ro((unsigned long)p_long_tmp,1);
          p_print_log(P_LKRG_INFO, "Configuration page marked read-only.\n");
          p_attr_init++;
@@ -148,23 +145,14 @@ void p_init_page_attr(void) {
                   *(p_long_tmp+3*p_long_offset));
    }
 #endif
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_init_page_attr>\n");
-
 }
 
-void p_uninit_page_attr(void) {
+static void p_uninit_page_attr(void) {
 
-   unsigned long *p_long_tmp = 0x0;
+   unsigned long *p_long_tmp = 0;
 #if !defined(CONFIG_ARM)
    unsigned long p_long_offset = PAGE_SIZE/sizeof(p_long_tmp); // On purpose sizeof pointer
 #endif
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_uninit_page_attr>\n");
 
    if (p_attr_init) {
       p_long_tmp = (unsigned long *)P_CTRL_ADDR;
@@ -194,11 +182,6 @@ void p_uninit_page_attr(void) {
    }
 
    p_attr_init ^= p_attr_init;
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_uninit_page_attr>\n");
-
 }
 
 void p_parse_module_params(void) {
@@ -236,85 +219,85 @@ void p_parse_module_params(void) {
    /* kint_validate */
    if (kint_validate > 3) {
       P_CTRL(p_kint_validate) = 3;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    } else if (P_CTRL(p_kint_validate) != kint_validate) {
       P_CTRL(p_kint_validate) = kint_validate;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    }
 
    /* kint_enforce */
    if (kint_enforce > 2) {
       P_CTRL(p_kint_enforce) = 2;
-      P_CTRL(p_profile_enforce) = 0x9;
+      P_CTRL(p_profile_enforce) = 9;
    } else if (P_CTRL(p_kint_enforce) != kint_enforce) {
       P_CTRL(p_kint_enforce) = kint_enforce;
-      P_CTRL(p_profile_enforce) = 0x9;
+      P_CTRL(p_profile_enforce) = 9;
    }
 
    /* msr_validate */
    if (msr_validate > 1) {
       P_CTRL(p_msr_validate) = 1;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    } else if (P_CTRL(p_msr_validate) != msr_validate) {
       P_CTRL(p_msr_validate) = msr_validate;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    }
 
    /* pint_validate */
    if (pint_validate > 3) {
       P_CTRL(p_pint_validate) = 3;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    } else if (P_CTRL(p_pint_validate) != pint_validate) {
       P_CTRL(p_pint_validate) = pint_validate;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    }
 
    /* pint_enforce */
    if (pint_enforce > 2) {
       P_CTRL(p_pint_enforce) = 2;
-      P_CTRL(p_profile_enforce) = 0x9;
+      P_CTRL(p_profile_enforce) = 9;
    } else if (P_CTRL(p_pint_enforce) != pint_enforce) {
       P_CTRL(p_pint_enforce) = pint_enforce;
-      P_CTRL(p_profile_enforce) = 0x9;
+      P_CTRL(p_profile_enforce) = 9;
    }
 
    /* umh_validate */
    if (umh_validate > 2) {
       P_CTRL(p_umh_validate) = 2;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    } else if (P_CTRL(p_umh_validate) != umh_validate) {
       P_CTRL(p_umh_validate) = umh_validate;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    }
 
    /* umh_enforce */
    if (umh_enforce > 2) {
       P_CTRL(p_umh_enforce) = 2;
-      P_CTRL(p_profile_enforce) = 0x9;
+      P_CTRL(p_profile_enforce) = 9;
    } else if (P_CTRL(p_umh_enforce) != umh_enforce) {
       P_CTRL(p_umh_enforce) = umh_enforce;
-      P_CTRL(p_profile_enforce) = 0x9;
+      P_CTRL(p_profile_enforce) = 9;
    }
 
    /* pcfi_validate */
    if (pcfi_validate > 2) {
       P_CTRL(p_pcfi_validate) = 2;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    } else if (P_CTRL(p_pcfi_validate) != pcfi_validate) {
       P_CTRL(p_pcfi_validate) = pcfi_validate;
-      P_CTRL(p_profile_validate) = 0x9;
+      P_CTRL(p_profile_validate) = 9;
    }
 
    /* pcfi_enforce */
    if (pcfi_enforce > 2) {
       P_CTRL(p_pcfi_enforce) = 2;
-      P_CTRL(p_profile_enforce) = 0x9;
+      P_CTRL(p_profile_enforce) = 9;
    } else if (P_CTRL(p_pcfi_enforce) != pcfi_enforce) {
       P_CTRL(p_pcfi_enforce) = pcfi_enforce;
-      P_CTRL(p_profile_enforce) = 0x9;
+      P_CTRL(p_profile_enforce) = 9;
    }
 
-   p_pcfi_CPU_flags = 0x0;
+   p_pcfi_CPU_flags = 0;
 
 #if defined(CONFIG_X86)
 
@@ -324,23 +307,23 @@ void p_parse_module_params(void) {
       /* smep_validate */
       if (smep_validate > 1) {
          P_CTRL(p_smep_validate) = 1;
-         P_CTRL(p_profile_validate) = 0x9;
+         P_CTRL(p_profile_validate) = 9;
       } else if (P_CTRL(p_smep_validate) != smep_validate) {
          P_CTRL(p_smep_validate) = smep_validate;
-         P_CTRL(p_profile_validate) = 0x9;
+         P_CTRL(p_profile_validate) = 9;
       }
 
       /* smep_enforce */
       if (smep_enforce > 2) {
          P_CTRL(p_smep_enforce) = 2;
-         P_CTRL(p_profile_enforce) = 0x9;
+         P_CTRL(p_profile_enforce) = 9;
       } else if (P_CTRL(p_smep_enforce) != smep_enforce) {
          P_CTRL(p_smep_enforce) = smep_enforce;
-         P_CTRL(p_profile_enforce) = 0x9;
+         P_CTRL(p_profile_enforce) = 9;
       }
    } else {
-      P_CTRL(p_smep_validate) = 0x0;
-      P_CTRL(p_smep_enforce) = 0x0;
+      P_CTRL(p_smep_validate) = 0;
+      P_CTRL(p_smep_enforce) = 0;
       p_print_log(P_LKRG_ERR,
             "System does NOT support SMEP. LKRG can't enforce SMEP validation :(\n");
    }
@@ -351,23 +334,23 @@ void p_parse_module_params(void) {
       /* smap_validate */
       if (smap_validate > 1) {
          P_CTRL(p_smap_validate) = 1;
-         P_CTRL(p_profile_validate) = 0x9;
+         P_CTRL(p_profile_validate) = 9;
       } else if (P_CTRL(p_smap_validate) != smap_validate) {
          P_CTRL(p_smap_validate) = smap_validate;
-         P_CTRL(p_profile_validate) = 0x9;
+         P_CTRL(p_profile_validate) = 9;
       }
 
       /* smap_enforce */
       if (smap_enforce > 2) {
          P_CTRL(p_smap_enforce) = 2;
-         P_CTRL(p_profile_enforce) = 0x9;
+         P_CTRL(p_profile_enforce) = 9;
       } else if (P_CTRL(p_smap_enforce) != smap_enforce) {
          P_CTRL(p_smap_enforce) = smap_enforce;
-         P_CTRL(p_profile_enforce) = 0x9;
+         P_CTRL(p_profile_enforce) = 9;
       }
    } else {
-      P_CTRL(p_smap_validate) = 0x0;
-      P_CTRL(p_smap_enforce) = 0x0;
+      P_CTRL(p_smap_validate) = 0;
+      P_CTRL(p_smap_enforce) = 0;
       p_print_log(P_LKRG_ERR,
             "System does NOT support SMAP. LKRG can't enforce SMAP validation :(\n");
    }
@@ -384,10 +367,11 @@ void p_parse_module_params(void) {
 static int __init p_lkrg_register(void) {
 
    int p_ret = P_LKRG_SUCCESS;
-   char p_cpu = 0x0;
-   char p_freeze = 0x0;
+   char p_cpu = 0;
+   char p_freeze = 0;
 
    p_print_log(P_LKRG_CRIT, "Loading LKRG...\n");
+   P_SYM(p_state_init) = 0;
 
    /*
     * Generate random SipHash key
@@ -428,11 +412,51 @@ static int __init p_lkrg_register(void) {
       goto p_main_error;
    }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0)
+   P_SYM(p_native_write_cr4) = (void (*)(unsigned long))P_SYM(p_kallsyms_lookup_name)("native_write_cr4");
+
+   if (!P_SYM(p_native_write_cr4)) {
+      p_print_log(P_LKRG_ERR,
+             "ERROR: Can't find 'native_write_cr4' function :( Exiting...\n");
+      p_ret = P_LKRG_GENERAL_ERROR;
+      goto p_main_error;
+   }
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,9,0)
+   P_SYM(p_module_address) = (struct module* (*)(unsigned long))P_SYM(p_kallsyms_lookup_name)("__module_address");
+
+   if (!P_SYM(p_module_address)) {
+      p_print_log(P_LKRG_ERR,
+             "ERROR: Can't find '__module_address' function :( Exiting...\n");
+      p_ret = P_LKRG_GENERAL_ERROR;
+      goto p_main_error;
+   }
+
+   P_SYM(p_module_text_address) = (struct module* (*)(unsigned long))P_SYM(p_kallsyms_lookup_name)("__module_text_address");
+
+   if (!P_SYM(p_module_text_address)) {
+      p_print_log(P_LKRG_ERR,
+             "ERROR: Can't find '__module_text_address' function :( Exiting...\n");
+      p_ret = P_LKRG_GENERAL_ERROR;
+      goto p_main_error;
+   }
+#endif
+
+   P_SYM(p_wait_for_kprobe_optimizer) = (void (*)(void))P_SYM(p_kallsyms_lookup_name)("wait_for_kprobe_optimizer");
+
+   if (!P_SYM(p_wait_for_kprobe_optimizer)) {
+      p_print_log(P_LKRG_ERR,
+             "ERROR: Can't find 'wait_for_kprobe_optimizer' function :( Exiting...\n");
+      p_ret = P_LKRG_GENERAL_ERROR;
+      goto p_main_error;
+   }
+
    // Freeze all non-kernel processes
    while (P_SYM(p_freeze_processes)())
       schedule();
 
-   p_freeze = 0x1;
+   p_freeze = 1;
 
    /*
     * First, we need to plant *kprobes... Before DB is created!
@@ -487,7 +511,7 @@ static int __init p_lkrg_register(void) {
       goto p_main_error;
    }
 #endif
-   p_cpu = 0x1;
+   p_cpu = 1;
 
 #if !defined(CONFIG_ARM64)
 
@@ -562,7 +586,8 @@ p_main_error:
    if (p_ret != P_LKRG_SUCCESS) {
       P_CTRL(p_kint_validate) = 0;
       p_deregister_notifiers();
-      del_timer_sync(&p_timer);
+      if (p_timer.function)
+         del_timer_sync(&p_timer);
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4,10,0)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0)
       if (p_cpu)
@@ -584,16 +609,20 @@ p_main_error:
       p_offload_cache_delete();
       p_deregister_module_notifier();
       if (p_db.p_CPU_metadata_array) {
-         kzfree(p_db.p_CPU_metadata_array);
+         p_kzfree(p_db.p_CPU_metadata_array);
          p_db.p_CPU_metadata_array = NULL;
       }
       p_uninit_page_attr();
+#if defined(P_LKRG_JUMP_LABEL_STEXT_DEBUG)
+      if (p_db.kernel_stext_copy)
+         vfree(p_db.kernel_stext_copy);
+#endif
    }
 
    if (p_freeze) {
       // Thaw all non-kernel processes
       P_SYM(p_thaw_processes)();
-      p_freeze = 0x0;
+      p_freeze = 0;
    }
 
    return p_ret;
@@ -615,7 +644,8 @@ static void __exit p_lkrg_deregister(void) {
 
    P_CTRL(p_kint_validate) = 0;
    p_deregister_notifiers();
-   del_timer_sync(&p_timer);
+   if (p_timer.function)
+      del_timer_sync(&p_timer);
 
 
    // Freeze all non-kernel processes
@@ -637,13 +667,18 @@ static void __exit p_lkrg_deregister(void) {
 #endif
 
    p_exploit_detection_exit();
-   p_offload_cache_delete();
    p_unregister_arch_metadata();
+   p_offload_cache_delete();
    p_deregister_module_notifier();
 
 
    if (p_db.p_CPU_metadata_array)
-      kzfree(p_db.p_CPU_metadata_array);
+      p_kzfree(p_db.p_CPU_metadata_array);
+
+#if defined(P_LKRG_JUMP_LABEL_STEXT_DEBUG)
+   if (p_db.kernel_stext_copy)
+      vfree(p_db.kernel_stext_copy);
+#endif
 
    // Thaw all non-kernel processes
    P_SYM(p_thaw_processes)();
@@ -652,7 +687,11 @@ static void __exit p_lkrg_deregister(void) {
 }
 
 
+#ifdef MODULE
 module_init(p_lkrg_register);
+#else
+late_initcall_sync(p_lkrg_register);
+#endif
 module_exit(p_lkrg_deregister);
 
 module_param(log_level, uint, 0000);
@@ -670,7 +709,7 @@ MODULE_PARM_DESC(kint_enforce, "kint_enforce [2 (panic) is default]");
 module_param(msr_validate, uint, 0000);
 MODULE_PARM_DESC(msr_validate, "msr_validate [0 (disabled) is default]");
 module_param(pint_validate, uint, 0000);
-MODULE_PARM_DESC(pint_validate, "pint_validate [2 (current + waking up) is default]");
+MODULE_PARM_DESC(pint_validate, "pint_validate [1 (current) is default]");
 module_param(pint_enforce, uint, 0000);
 MODULE_PARM_DESC(pint_enforce, "pint_enforce [1 (kill task) is default]");
 module_param(umh_validate, uint, 0000);

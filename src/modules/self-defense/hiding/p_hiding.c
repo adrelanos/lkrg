@@ -26,14 +26,10 @@ struct module_notes_attrs *p_find_notes_attrs;
 
 void p_hide_itself(void) {
 
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_hide_itself>\n");
-
    if (P_CTRL(p_hide_lkrg)) {
       p_print_log(P_LKRG_WARN,
              "Module is already hidden!\n");
-      goto p_hide_itself_out;
+      return;
    }
 
 /*
@@ -52,14 +48,10 @@ void p_hide_itself(void) {
    P_HIDE_FROM_DDEBUG(P_SYM(p_find_me));
 #endif
 
-   spin_lock(&p_db.p_jump_label.p_jl_lock);
-
    /* OK, now recalculate hashes again! */
    while(p_kmod_hash(&p_db.p_module_list_nr,&p_db.p_module_list_array,
                      &p_db.p_module_kobj_nr,&p_db.p_module_kobj_array, 0x2) != P_LKRG_SUCCESS)
       schedule();
-
-   spin_unlock(&p_db.p_jump_label.p_jl_lock);
 
    /* Update global module list/kobj hash */
    p_db.p_module_list_hash = p_lkrg_fast_hash((unsigned char *)p_db.p_module_list_array,
@@ -69,19 +61,11 @@ void p_hide_itself(void) {
                                           (unsigned int)p_db.p_module_kobj_nr * sizeof(p_module_kobj_mem));
    /* We should be fine now! */
 
-   P_CTRL(p_hide_lkrg) = 0x1;
+   P_CTRL(p_hide_lkrg) = 1;
 
    spin_unlock(&p_db_lock);
    /* Release the 'module_mutex' */
    mutex_unlock(&module_mutex);
-
-p_hide_itself_out:
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_hide_itself>\n");
-
-   return;
 }
 
 #ifdef P_LKRG_UNHIDE
@@ -92,14 +76,10 @@ void p_unhide_itself(void) {
    struct kset       *p_tmp_kset   = p_tmp_mod->mkobj.kobj.kset;
    struct kobj_type  *p_tmp_ktype  = p_tmp_mod->mkobj.kobj.ktype;
 
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_unhide_itself>\n");
-
    if (!P_CTRL(p_hide_lkrg)) {
       p_print_log(P_LKRG_WARN,
              "Module is already unhidden (visible)!\n");
-      goto p_unhide_itself_out;
+      return;
    }
 
    /* We are heavily consuming module list here - take 'module_mutex' */
@@ -112,14 +92,10 @@ void p_unhide_itself(void) {
 //   P_UNHIDE_FROM_KOBJ(P_SYM(p_find_me),p_find_kobj_parent,
 //                      p_find_sect_attrs,p_find_notes_attrs);
 
-   spin_lock(&p_db.p_jump_label.p_jl_lock);
-
    /* OK, now recalculate hashes again! */
    while(p_kmod_hash(&p_db.p_module_list_nr,&p_db.p_module_list_array,
                      &p_db.p_module_kobj_nr,&p_db.p_module_kobj_array, 0x2) != P_LKRG_SUCCESS)
       schedule();
-
-   spin_unlock(&p_db.p_jump_label.p_jl_lock);
 
    /* Update global module list/kobj hash */
    p_db.p_module_list_hash = p_lkrg_fast_hash((unsigned char *)p_db.p_module_list_array,
@@ -129,18 +105,10 @@ void p_unhide_itself(void) {
                                           (unsigned int)p_db.p_module_kobj_nr * sizeof(p_module_kobj_mem));
    /* We should be fine now! */
 
-   P_CTRL(p_hide_lkrg) = 0x0;
+   P_CTRL(p_hide_lkrg) = 0;
 
    spin_unlock(&p_db_lock);
    /* Release the 'module_mutex' */
    mutex_unlock(&module_mutex);
-
-p_unhide_itself_out:
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_unhide_itself>\n");
-
-   return;
 }
 #endif

@@ -26,7 +26,7 @@ unsigned int p_time_stamp = 15; /* timeout in seconds */
 /* God mode variables ;) */
 DEFINE_SPINLOCK(p_db_lock);
 unsigned long p_db_flags;
-unsigned int p_manual = 0x0;
+unsigned int p_manual = 0;
 
 /* kmem_cache for offloding WQ */
 struct kmem_cache *p_offload_cache = NULL;
@@ -36,78 +36,41 @@ static void p_offload_cache_zero(void *p_arg) {
 
    struct work_struct *p_struct = p_arg;
 
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_offload_cache_zero>\n");
-
-   memset(p_struct, 0x0, sizeof(struct work_struct));
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_offload_cache_zero>\n");
-
+   memset(p_struct, 0, sizeof(struct work_struct));
 }
 
 int p_offload_cache_init(void) {
 
-   int p_ret = P_LKRG_SUCCESS;
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_offload_cache_init>\n");
-
    if ( (p_offload_cache = kmem_cache_create("p_offload_cache", sizeof(struct work_struct),
-                                             0x0, SLAB_HWCACHE_ALIGN, p_offload_cache_zero)) == NULL) {
+                                             0, SLAB_HWCACHE_ALIGN, p_offload_cache_zero)) == NULL) {
       p_print_log(P_LKRG_ERR, "kmem_cache_create() for offloading error! :(\n");
-      p_ret = -ENOMEM;
+      return -ENOMEM;
    }
 
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_offload_cache_init> (p_ret => %d)\n",p_ret);
-
-   return p_ret;
+   return P_LKRG_SUCCESS;
 }
 
 void p_offload_cache_delete(void) {
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_offload_cache_delete>\n");
 
    flush_workqueue(system_unbound_wq);
    if (p_offload_cache) {
       kmem_cache_destroy(p_offload_cache);
       p_offload_cache = NULL;
    }
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_offload_cache_delete>\n");
-
 }
 
 void p_integrity_timer(void) {
 
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_integrity_timer>\n");
-
    p_timer.expires    = jiffies + P_CTRL(p_interval)*HZ;
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
-   p_timer.data       = 0x1;
+   p_timer.data       = 1;
    p_timer.function   = p_offload_work;
    init_timer(&p_timer);
 #else
    timer_setup(&p_timer, p_offload_work, 0);
 #endif
    add_timer(&p_timer);
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_integrity_timer>\n");
-
 }
 
 
@@ -119,9 +82,6 @@ void p_offload_work(struct timer_list *p_timer) {
 
    struct work_struct *p_worker;
 
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_offload_work>\n");
    p_debug_log(P_LKRG_STRONG_DBG,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
           "p_timer => %ld\n",p_timer);
@@ -135,11 +95,6 @@ void p_offload_work(struct timer_list *p_timer) {
    queue_work(system_unbound_wq, p_worker);
    if (p_timer)
       p_integrity_timer();
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_offload_work>\n");
-
 }
 
 
@@ -155,25 +110,23 @@ void p_check_integrity(struct work_struct *p_work) {
    unsigned int p_module_kobj_nr_tmp; // Count by walk through the list first
    p_module_list_mem *p_module_list_tmp = NULL;
    p_module_kobj_mem *p_module_kobj_tmp = NULL;
-   char p_mod_bad_nr = 0x0;
+   char p_mod_bad_nr = 0;
    /* Are we compromised ? */
-   unsigned int p_hack_check = 0x0;
+   unsigned int p_hack_check = 0;
    /* Module syncing temporary pointer */
    struct module *p_tmp_mod;
-   unsigned int p_tmp = 0x0;
+   unsigned int p_tmp = 0;
    int p_ret;
 
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_check_integrity>\n");
-
-   if (!P_CTRL(p_kint_validate) || (!p_manual && P_CTRL(p_kint_validate) == 1))
+   if (unlikely(!P_CTRL(p_kint_validate)) ||
+       unlikely(!p_manual && P_CTRL(p_kint_validate) == 1) ||
+       unlikely(!(P_SYM(p_state_init) & 0x2)))
       goto p_check_integrity_tasks;
 
    /*
     * First allocate temporary buffer for per CPU data. Number of possible CPUs
     * is per kernel compilation. Hot plug-in/off won't change that value so it is
-    * safe to prealocate buffer here - before lock and before recounting CPUs info.
+    * safe to preallocate buffer here - before lock and before recounting CPUs info.
     */
 
    /*
@@ -244,7 +197,7 @@ void p_check_integrity(struct work_struct *p_work) {
    *  *) http://blog.pi3.com.pl/?p=549
    *  *) http://lists.openwall.net/linux-kernel/2016/09/21/68
    *
-   * on_each_cpu() might mitigate this problem a bit becuase has extra
+   * on_each_cpu() might mitigate this problem a bit because has extra
    * self-balancing code for performance reasons.
    */
    on_each_cpu(p_dump_CPU_metadata,p_tmp_cpus,true);
@@ -262,13 +215,6 @@ void p_check_integrity(struct work_struct *p_work) {
 
    p_text_section_lock();
 
-   /* We are heavily consuming module list here - take 'module_mutex' */
-   mutex_lock(&module_mutex);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
-   /* Hacky way of 'stopping' KOBJs activities */
-   mutex_lock(P_SYM(p_kernfs_mutex));
-#endif
-
    /*
     * Memory allocation may fail... let's loop here!
     */
@@ -284,12 +230,6 @@ void p_check_integrity(struct work_struct *p_work) {
       schedule();
    }
 /*
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
-   * unlock KOBJ activities *
-   mutex_unlock(P_SYM(p_kernfs_mutex));
-#endif
-   * Release the 'module_mutex' *
-   mutex_unlock(&module_mutex);
    p_text_section_unlock();
 */
 
@@ -337,11 +277,29 @@ void p_check_integrity(struct work_struct *p_work) {
                                  (unsigned int)p_db.kernel_stext.p_size);
 
    if (p_db.kernel_stext.p_hash != p_tmp_hash) {
+#if defined(P_LKRG_JUMP_LABEL_STEXT_DEBUG)
+      char *p_str1 = (unsigned char *)p_db.kernel_stext.p_addr;
+      char *p_str2 = (unsigned char *)p_db.kernel_stext_copy;
+      char p_eh_buf[0x100];
+#endif
       /* We detected core kernel .text corruption - we are hacked and can't recover */
       /* I'm hacked! ;( */
       p_print_log(P_LKRG_CRIT,
              "ALERT !!! _STEXT MEMORY BLOCK HASH IS DIFFERENT - it is [0x%llx] and should be [0x%llx] !!!\n",
                                                             p_tmp_hash,p_db.kernel_stext.p_hash);
+#if defined(P_LKRG_JUMP_LABEL_STEXT_DEBUG)
+      for (p_tmp = 0; p_tmp < p_db.kernel_stext.p_size; p_tmp++) {
+         if (p_str2[p_tmp] != p_str1[p_tmp]) {
+            sprint_symbol_no_offset(p_eh_buf,(unsigned long)((unsigned long)p_db.kernel_stext.p_addr+(unsigned long)p_tmp));
+            printk(KERN_CRIT "copy[0x%x] vs now[0x%x] offset[%d | 0x%x] symbol[%s]\n",
+                   p_str2[p_tmp],
+                   p_str1[p_tmp],
+                   p_tmp,
+                   p_tmp,
+                   p_eh_buf);
+         }
+      }
+#endif
       P_KINT_IF_ACCEPT(p_db.kernel_stext.p_hash,
                        p_tmp_hash,
                        p_hack_check);
@@ -434,8 +392,8 @@ void p_check_integrity(struct work_struct *p_work) {
     * core-dump image, ddebug_table information, symbol table, etc.
     */
    if (p_module_list_nr_tmp != p_module_kobj_nr_tmp) {
-      unsigned int p_tmp_cnt,p_tmp_diff = 0x0;
-      char p_tmp_flag,p_tmp_flag_cnt = 0x0;
+      unsigned int p_tmp_cnt,p_tmp_diff = 0;
+      char p_tmp_flag,p_tmp_flag_cnt = 0;
 
       p_mod_bad_nr++;
       if (p_module_list_nr_tmp < p_module_kobj_nr_tmp) {
@@ -451,12 +409,12 @@ void p_check_integrity(struct work_struct *p_work) {
 
          p_tmp_diff = p_module_kobj_nr_tmp - p_module_list_nr_tmp;
 
-         for (p_tmp_flag = 0x0, p_tmp_hash = 0x0; p_tmp_hash < p_module_kobj_nr_tmp;
-                                                               p_tmp_flag = 0x0, p_tmp_hash++) {
-            for (p_tmp_cnt = 0x0; p_tmp_cnt < p_module_list_nr_tmp; p_tmp_cnt++) {
+         for (p_tmp_flag = 0, p_tmp_hash = 0; p_tmp_hash < p_module_kobj_nr_tmp;
+                                                               p_tmp_flag = 0, p_tmp_hash++) {
+            for (p_tmp_cnt = 0; p_tmp_cnt < p_module_list_nr_tmp; p_tmp_cnt++) {
                /* Is module on both lists? */
                if (p_module_kobj_tmp[p_tmp_hash].p_mod == p_module_list_tmp[p_tmp_cnt].p_mod) {
-                  p_tmp_flag = 0x1;
+                  p_tmp_flag = 1;
                   break;
                }
             }
@@ -657,12 +615,12 @@ void p_check_integrity(struct work_struct *p_work) {
 
          p_tmp_diff = p_module_list_nr_tmp - p_module_kobj_nr_tmp;
 
-         for (p_tmp_flag = 0x0, p_tmp_hash = 0x0; p_tmp_hash < p_module_list_nr_tmp;
-                                                               p_tmp_flag = 0x0, p_tmp_hash++) {
-            for (p_tmp_cnt = 0x0; p_tmp_cnt < p_module_kobj_nr_tmp; p_tmp_cnt++) {
+         for (p_tmp_flag = 0, p_tmp_hash = 0; p_tmp_hash < p_module_list_nr_tmp;
+                                                               p_tmp_flag = 0, p_tmp_hash++) {
+            for (p_tmp_cnt = 0; p_tmp_cnt < p_module_kobj_nr_tmp; p_tmp_cnt++) {
                /* Is module on both lists? */
                if (p_module_list_tmp[p_tmp_hash].p_mod == p_module_kobj_tmp[p_tmp_cnt].p_mod) {
-                  p_tmp_flag = 0x1;
+                  p_tmp_flag = 1;
                   break;
                }
             }
@@ -855,7 +813,7 @@ void p_check_integrity(struct work_struct *p_work) {
 
    /*
     * We found as many modules in module list as in sysfs
-    * Let's validate if our databse has the same information as we gathered now
+    * Let's validate if our database has the same information as we gathered now
     *
     */
 
@@ -870,8 +828,8 @@ void p_check_integrity(struct work_struct *p_work) {
     * core-dump image, ddebug_table information, symbol table, etc.
     */
    if (p_module_list_nr_tmp != p_db.p_module_list_nr) {
-      unsigned int p_tmp_cnt,p_tmp_diff = 0x0;
-      char p_tmp_flag,p_tmp_flag_cnt = 0x0;
+      unsigned int p_tmp_cnt,p_tmp_diff = 0;
+      char p_tmp_flag,p_tmp_flag_cnt = 0;
 
       p_mod_bad_nr++;
       if (p_module_list_nr_tmp < p_db.p_module_list_nr) {
@@ -891,12 +849,12 @@ void p_check_integrity(struct work_struct *p_work) {
 
          p_tmp_diff = p_db.p_module_list_nr - p_module_list_nr_tmp;
 
-         for (p_tmp_flag = 0x0, p_tmp_hash = 0x0; p_tmp_hash < p_db.p_module_list_nr;
-                                                               p_tmp_flag = 0x0, p_tmp_hash++) {
-            for (p_tmp_cnt = 0x0; p_tmp_cnt < p_module_list_nr_tmp; p_tmp_cnt++) {
+         for (p_tmp_flag = 0, p_tmp_hash = 0; p_tmp_hash < p_db.p_module_list_nr;
+                                                               p_tmp_flag = 0, p_tmp_hash++) {
+            for (p_tmp_cnt = 0; p_tmp_cnt < p_module_list_nr_tmp; p_tmp_cnt++) {
                /* Is module on both lists? */
                if (p_db.p_module_list_array[p_tmp_hash].p_mod == p_module_list_tmp[p_tmp_cnt].p_mod) {
-                  p_tmp_flag = 0x1;
+                  p_tmp_flag = 1;
                   break;
                }
             }
@@ -905,7 +863,7 @@ void p_check_integrity(struct work_struct *p_work) {
                /* OK we found which module is in DB module list but not in current module list... */
                p_tmp_flag_cnt++;
 
-               // TODO: Module dissapeared and we didn't notice it! We shouldn't dump it becuase
+               // TODO: Module disappeared and we didn't notice it! We shouldn't dump it because
                // most likely module doesn't exists anymore...
                // But we can try to poke that page where modules used to be to find out scratches
                // of information about it (e.g. name? symbols table?)
@@ -1079,12 +1037,12 @@ void p_check_integrity(struct work_struct *p_work) {
 
          p_tmp_diff = p_module_list_nr_tmp - p_db.p_module_list_nr;
 
-         for (p_tmp_flag = 0x0, p_tmp_hash = 0x0; p_tmp_hash < p_module_list_nr_tmp;
-                                                               p_tmp_flag = 0x0, p_tmp_hash++) {
-            for (p_tmp_cnt = 0x0; p_tmp_cnt < p_db.p_module_list_nr; p_tmp_cnt++) {
+         for (p_tmp_flag = 0, p_tmp_hash = 0; p_tmp_hash < p_module_list_nr_tmp;
+                                                               p_tmp_flag = 0, p_tmp_hash++) {
+            for (p_tmp_cnt = 0; p_tmp_cnt < p_db.p_module_list_nr; p_tmp_cnt++) {
                /* Is module on both lists? */
                if (p_module_list_tmp[p_tmp_hash].p_mod == p_db.p_module_list_array[p_tmp_cnt].p_mod) {
-                  p_tmp_flag = 0x1;
+                  p_tmp_flag = 1;
                   break;
                }
             }
@@ -1289,8 +1247,8 @@ void p_check_integrity(struct work_struct *p_work) {
     * core-dump image, ddebug_table information, symbol table, etc.
     */
    if (p_module_kobj_nr_tmp != p_db.p_module_kobj_nr) {
-      unsigned int p_tmp_cnt,p_tmp_diff = 0x0;
-      char p_tmp_flag,p_tmp_flag_cnt = 0x0;
+      unsigned int p_tmp_cnt,p_tmp_diff = 0;
+      char p_tmp_flag,p_tmp_flag_cnt = 0;
 
       p_mod_bad_nr++;
       if (p_module_kobj_nr_tmp < p_db.p_module_kobj_nr) {
@@ -1309,12 +1267,12 @@ void p_check_integrity(struct work_struct *p_work) {
 
          p_tmp_diff = p_db.p_module_kobj_nr - p_module_kobj_nr_tmp;
 
-         for (p_tmp_flag = 0x0, p_tmp_hash = 0x0; p_tmp_hash < p_db.p_module_kobj_nr;
-                                                               p_tmp_flag = 0x0, p_tmp_hash++) {
-            for (p_tmp_cnt = 0x0; p_tmp_cnt < p_module_kobj_nr_tmp; p_tmp_cnt++) {
+         for (p_tmp_flag = 0, p_tmp_hash = 0; p_tmp_hash < p_db.p_module_kobj_nr;
+                                                               p_tmp_flag = 0, p_tmp_hash++) {
+            for (p_tmp_cnt = 0; p_tmp_cnt < p_module_kobj_nr_tmp; p_tmp_cnt++) {
                /* Is module on both lists? */
                if (p_db.p_module_kobj_array[p_tmp_hash].p_mod == p_module_kobj_tmp[p_tmp_cnt].p_mod) {
-                  p_tmp_flag = 0x1;
+                  p_tmp_flag = 1;
                   break;
                }
             }
@@ -1323,7 +1281,7 @@ void p_check_integrity(struct work_struct *p_work) {
                /* OK we found which module is in KOBJ DB but not in the current KOBJ list... */
                p_tmp_flag_cnt++;
 
-               // TODO: Module dissapeared and we didn't notice it! We shouldn't dump it becuase
+               // TODO: Module disappeared and we didn't notice it! We shouldn't dump it because
                // most likely module doesn't exists anymore...
                // But we can try to poke that page where modules used to be to find out scratches
                // of information about it (e.g. name? symbols table?)
@@ -1495,12 +1453,12 @@ void p_check_integrity(struct work_struct *p_work) {
 
          p_tmp_diff = p_module_kobj_nr_tmp - p_db.p_module_kobj_nr;
 
-         for (p_tmp_flag = 0x0, p_tmp_hash = 0x0; p_tmp_hash < p_module_kobj_nr_tmp;
-                                                               p_tmp_flag = 0x0, p_tmp_hash++) {
-            for (p_tmp_cnt = 0x0; p_tmp_cnt < p_db.p_module_kobj_nr; p_tmp_cnt++) {
+         for (p_tmp_flag = 0, p_tmp_hash = 0; p_tmp_hash < p_module_kobj_nr_tmp;
+                                                               p_tmp_flag = 0, p_tmp_hash++) {
+            for (p_tmp_cnt = 0; p_tmp_cnt < p_db.p_module_kobj_nr; p_tmp_cnt++) {
                /* Is module on both lists? */
                if (p_module_kobj_tmp[p_tmp_hash].p_mod == p_db.p_module_kobj_array[p_tmp_cnt].p_mod) {
-                  p_tmp_flag = 0x1;
+                  p_tmp_flag = 1;
                   break;
                }
             }
@@ -1676,7 +1634,7 @@ void p_check_integrity(struct work_struct *p_work) {
 /*   if ( (p_module_list_nr_tmp != p_module_kobj_nr_tmp) || (p_module_list_nr_tmp != p_db.p_module_list_nr)
         || (p_module_kobj_nr_tmp != p_db.p_module_kobj_nr) ) {
       printk(P_LKRG_PRINT P_LKRG_SIGNATURE
-             "ALERT !!! MODULES NUMBER ARE INCONSISTEN! IN DB: LIST[%d] KOBJ[%d], found LIST[%d], KOBJ[%d]\n",
+             "ALERT !!! MODULE NUMBERS ARE INCONSISTENT! IN DB: LIST[%d] KOBJ[%d], found LIST[%d], KOBJ[%d]\n",
              p_db.p_module_list_nr,p_db.p_module_kobj_nr,p_module_list_nr_tmp,p_module_kobj_nr_tmp);
       p_hack_check++;
 
@@ -1692,10 +1650,10 @@ void p_check_integrity(struct work_struct *p_work) {
    p_print_log(P_LKRG_INFO,"Hash from 'module list' => [0x%llx]\n",p_tmp_hash);
 
    if (p_tmp_hash != p_db.p_module_list_hash) {
-      unsigned int p_tmp_cnt,p_local_hack_check = 0x0;
+      unsigned int p_tmp_cnt,p_local_hack_check = 0;
 
-      for (p_tmp = 0x0; p_tmp < p_db.p_module_list_nr; p_tmp++) {
-         for (p_tmp_cnt = 0x0; p_tmp_cnt < p_module_list_nr_tmp; p_tmp_cnt++) {
+      for (p_tmp = 0; p_tmp < p_db.p_module_list_nr; p_tmp++) {
+         for (p_tmp_cnt = 0; p_tmp_cnt < p_module_list_nr_tmp; p_tmp_cnt++) {
             if (p_db.p_module_list_array[p_tmp].p_mod == p_module_list_tmp[p_tmp_cnt].p_mod) {
                if (p_db.p_module_list_array[p_tmp].p_mod_core_text_hash != p_module_list_tmp[p_tmp_cnt].p_mod_core_text_hash) {
                   /* I'm hacked! ;( */
@@ -1718,7 +1676,7 @@ void p_check_integrity(struct work_struct *p_work) {
                                                     (unsigned int)p_db.p_module_list_nr * sizeof(p_module_list_mem));
 
          if (p_tmp_hash != p_db.p_module_list_hash) {
-            p_local_hack_check = 0x1;
+            p_local_hack_check = 1;
          }
       }
 */
@@ -1771,9 +1729,9 @@ void p_check_integrity(struct work_struct *p_work) {
          }
       }
 
-      for (p_tmp_hash = 0x0; p_tmp_hash < p_db.p_module_kobj_nr; p_tmp_hash++) {
+      for (p_tmp_hash = 0; p_tmp_hash < p_db.p_module_kobj_nr; p_tmp_hash++) {
          unsigned int p_tmp_cnt;
-         for (p_tmp_cnt = 0x0; p_tmp_cnt < p_module_kobj_nr_tmp; p_tmp_cnt++) {
+         for (p_tmp_cnt = 0; p_tmp_cnt < p_module_kobj_nr_tmp; p_tmp_cnt++) {
             if (p_db.p_module_kobj_array[p_tmp_hash].p_mod == p_module_kobj_tmp[p_tmp_cnt].p_mod)
                if (p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash != p_module_kobj_tmp[p_tmp_cnt].p_mod_core_text_hash) {
                   p_print_log(P_LKRG_CRIT,
@@ -1792,7 +1750,7 @@ void p_check_integrity(struct work_struct *p_work) {
    if (p_hack_check) {
       p_print_log(P_LKRG_CRIT,
              "ALERT !!! SYSTEM HAS BEEN COMPROMISED - DETECTED DIFFERENT %u CHECKSUMS !!!\n",p_hack_check);
-      if (P_CTRL(p_kint_enforce == 0x2)) {
+      if (P_CTRL(p_kint_enforce == 2)) {
          // OK, we need to crash the kernel now
          panic(P_LKRG_SIGNATURE "Kernel Integrity verification failed! Killing the kernel...\n");
       }
@@ -1801,11 +1759,11 @@ void p_check_integrity(struct work_struct *p_work) {
    }
 
    if (p_module_list_tmp) {
-      kzfree(p_module_list_tmp);
+      p_kzfree(p_module_list_tmp);
       p_module_list_tmp = NULL;
    }
    if (p_module_kobj_tmp) {
-      kzfree(p_module_kobj_tmp);
+      p_kzfree(p_module_kobj_tmp);
       p_module_kobj_tmp = NULL;
    }
 
@@ -1815,15 +1773,9 @@ void p_check_integrity(struct work_struct *p_work) {
 
 p_check_integrity_cancel:
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
-   /* unlock KOBJ activities */
-   mutex_unlock(P_SYM(p_kernfs_mutex));
-#endif
-   /* Release the 'module_mutex' */
-   mutex_unlock(&module_mutex);
    p_text_section_unlock();
    if (p_tmp_cpus) {
-      kzfree(p_tmp_cpus);
+      p_kzfree(p_tmp_cpus);
       p_tmp_cpus = NULL;
    }
 
@@ -1843,9 +1795,4 @@ p_check_integrity_tasks:
    if (p_work) {
       p_free_offload(p_work);
    }
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_check_integrity>\n");
-
 }

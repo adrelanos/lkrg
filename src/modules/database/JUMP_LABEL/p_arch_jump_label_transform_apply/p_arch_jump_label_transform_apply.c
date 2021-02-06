@@ -35,7 +35,7 @@
 unsigned long p_jl_batch_addr[P_TP_VEC_MAX];
 unsigned int p_jl_batch_nr;
 
-char p_arch_jump_label_transform_apply_kretprobe_state = 0x0;
+char p_arch_jump_label_transform_apply_kretprobe_state = 0;
 
 static struct kretprobe p_arch_jump_label_transform_apply_kretprobe = {
     .kp.symbol_name = "arch_jump_label_transform_apply",
@@ -47,21 +47,22 @@ static struct kretprobe p_arch_jump_label_transform_apply_kretprobe = {
 };
 
 
-int p_arch_jump_label_transform_apply_entry(struct kretprobe_instance *p_ri, struct pt_regs *p_regs) {
+notrace int p_arch_jump_label_transform_apply_entry(struct kretprobe_instance *p_ri, struct pt_regs *p_regs) {
 
    int p_nr = *P_SYM(p_tp_vec_nr);
-   int p_cnt = 0x0;
+   int p_cnt = 0;
    p_text_poke_loc *p_tmp;
+   unsigned long p_flags;
 
-   p_debug_kprobe_log(
-          "Entering function <p_arch_jump_label_transform_apply_entry>\n");
    p_debug_kprobe_log(
           "p_arch_jump_label_transform_apply_entry: comm[%s] Pid:%d\n",current->comm,current->pid);
 
+   p_lkrg_counter_lock_lock(&p_jl_lock, &p_flags);
+   p_lkrg_counter_lock_val_inc(&p_jl_lock);
+   p_lkrg_counter_lock_unlock(&p_jl_lock, &p_flags);
+
    p_print_log(P_LKRG_INFO,
                "[JUMP_LABEL <batch mode>] New modifications => %d\n",p_nr);
-
-   spin_lock(&p_db.p_jump_label.p_jl_lock);
 
    for (p_jl_batch_nr = 0; p_cnt < p_nr; p_cnt++) {
       p_tmp = (p_text_poke_loc *)&P_SYM(p_tp_vec)[p_jl_batch_nr*sizeof(p_text_poke_loc)];
@@ -88,38 +89,36 @@ int p_arch_jump_label_transform_apply_entry(struct kretprobe_instance *p_ri, str
       }
    }
 
-   p_debug_kprobe_log(
-          "Leaving function <p_arch_jump_label_transform_apply_entry>\n");
-
    /* A dump_stack() here will give a stack backtrace */
-   return 0x0;
+   return 0;
 }
 
 
-int p_arch_jump_label_transform_apply_ret(struct kretprobe_instance *ri, struct pt_regs *p_regs) {
+notrace int p_arch_jump_label_transform_apply_ret(struct kretprobe_instance *ri, struct pt_regs *p_regs) {
 
    struct module *p_module = NULL;
    unsigned int p_cnt;
    unsigned int p_tmp,p_tmp2;
-   unsigned char p_flag = 0x0;
-   unsigned int p_text = 0x0;
-   unsigned int p_mod = 0x0;
+   unsigned char p_flag = 0;
+   unsigned int p_text = 0;
+   unsigned int p_mod = 0;
 //   DECLARE_BITMAP(p_mod_mask, p_db.p_module_list_nr);
-
-   p_debug_kprobe_log(
-          "Entering function <p_arch_jump_label_transform_apply_ret>\n");
 
    bitmap_zero(p_db.p_jump_label.p_mod_mask, p_db.p_module_list_nr);
 
-   for (p_cnt = 0x0; p_cnt < p_jl_batch_nr; p_cnt++) {
+   for (p_cnt = 0; p_cnt < p_jl_batch_nr; p_cnt++) {
 
       if (P_SYM(p_core_kernel_text)(p_jl_batch_addr[p_cnt])) {
 
          p_text++;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,9,0)
+      } else if ( (p_module = P_SYM(p_module_text_address)(p_jl_batch_addr[p_cnt])) != NULL) {
+#else
       } else if ( (p_module = __module_text_address(p_jl_batch_addr[p_cnt])) != NULL) {
+#endif
 
-         for (p_tmp = 0x0; p_tmp < p_db.p_module_list_nr; p_tmp++) {
+         for (p_tmp = 0; p_tmp < p_db.p_module_list_nr; p_tmp++) {
             if (p_db.p_module_list_array[p_tmp].p_mod == p_module) {
 
                /*
@@ -133,8 +132,12 @@ int p_arch_jump_label_transform_apply_ret(struct kretprobe_instance *ri, struct 
          }
 
       } else {
-         p_print_log(P_LKRG_ERR,
-                     "[JUMP_LABEL <batch mode>] <Exit> I should never be here! [0x%lx]\n",p_jl_batch_addr[p_cnt]);
+         /*
+          * FTRACE might generate dynamic trampoline which is not part of .text section.
+          * This is not abnormal situation anymore.
+          */
+         p_print_log(P_LKRG_INFO,
+                     "[JUMP_LABEL <batch mode>] Not a .text section! [0x%lx]\n",p_jl_batch_addr[p_cnt]);
       }
    }
 
@@ -146,12 +149,17 @@ int p_arch_jump_label_transform_apply_ret(struct kretprobe_instance *ri, struct 
       p_db.kernel_stext.p_hash = p_lkrg_fast_hash((unsigned char *)p_db.kernel_stext.p_addr,
                                                   (unsigned int)p_db.kernel_stext.p_size);
 
+#if defined(P_LKRG_JUMP_LABEL_STEXT_DEBUG)
+         memcpy(p_db.kernel_stext_copy,p_db.kernel_stext.p_addr,p_db.kernel_stext.p_size);
+         p_db.kernel_stext_copy[p_db.kernel_stext.p_size] = 0;
+#endif
+
       p_print_log(P_LKRG_INFO,
                   "[JUMP_LABEL <batch mode>] Updating kernel core .text section hash!\n");
    }
 
    if (p_mod) {
-      for (p_tmp = 0x0; p_tmp < p_db.p_module_list_nr; p_tmp++) {
+      for (p_tmp = 0; p_tmp < p_db.p_module_list_nr; p_tmp++) {
          if (test_bit(p_tmp, p_db.p_jump_label.p_mod_mask)) {
 
             /*
@@ -179,11 +187,11 @@ int p_arch_jump_label_transform_apply_ret(struct kretprobe_instance *ri, struct 
             /*
              * Because we update module's .text section hash we need to update KOBJs as well.
              */
-            for (p_tmp2 = 0x0; p_tmp2 < p_db.p_module_kobj_nr; p_tmp2++) {
+            for (p_tmp2 = 0; p_tmp2 < p_db.p_module_kobj_nr; p_tmp2++) {
                if (p_db.p_module_kobj_array[p_tmp2].p_mod == p_module) {
                   p_db.p_module_kobj_array[p_tmp2].p_mod_core_text_hash =
                                    p_db.p_module_list_array[p_tmp].p_mod_core_text_hash;
-                  p_flag = 0x1;
+                  p_flag = 1;
                   break;
                }
             }
@@ -210,22 +218,15 @@ int p_arch_jump_label_transform_apply_ret(struct kretprobe_instance *ri, struct 
 
    p_db.p_jump_label.p_state = P_JUMP_LABEL_NONE;
 
-   spin_unlock(&p_db.p_jump_label.p_jl_lock);
+   p_lkrg_counter_lock_val_dec(&p_jl_lock);
 
-   p_debug_kprobe_log(
-          "Entering function <p_arch_jump_label_transform_apply_ret>\n");
-
-   return 0x0;
+   return 0;
 }
 
 
 int p_install_arch_jump_label_transform_apply_hook(void) {
 
-   int p_ret;
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_install_arch_jump_label_transform_apply_hook>\n");
+   int p_tmp;
 
    P_SYM(p_tp_vec) = (struct text_poke_loc **)P_SYM(p_kallsyms_lookup_name)("tp_vec");
    P_SYM(p_tp_vec_nr) = (int *)P_SYM(p_kallsyms_lookup_name)("tp_vec_nr");
@@ -240,38 +241,25 @@ int p_install_arch_jump_label_transform_apply_hook(void) {
       p_print_log(P_LKRG_ERR,
              "<p_install_arch_jump_label_transform_apply_hook> "
              "Can't find 'tp_vec' / 'tp_vec_nr' variable :( Exiting...\n");
-      p_ret = P_LKRG_GENERAL_ERROR;
-      goto p_install_arch_jump_label_transform_apply_hook_out;
+      return P_LKRG_GENERAL_ERROR;
    }
 
-   if ( (p_ret = register_kretprobe(&p_arch_jump_label_transform_apply_kretprobe)) < 0) {
+   if ( (p_tmp = register_kretprobe(&p_arch_jump_label_transform_apply_kretprobe)) != 0) {
       p_print_log(P_LKRG_ERR, "[kretprobe] register_kretprobe() for <%s> failed! [err=%d]\n",
                   p_arch_jump_label_transform_apply_kretprobe.kp.symbol_name,
-                  p_ret);
-      goto p_install_arch_jump_label_transform_apply_hook_out;
+                  p_tmp);
+      return P_LKRG_GENERAL_ERROR;
    }
    p_print_log(P_LKRG_INFO, "Planted [kretprobe] <%s> at: 0x%lx\n",
                p_arch_jump_label_transform_apply_kretprobe.kp.symbol_name,
                (unsigned long)p_arch_jump_label_transform_apply_kretprobe.kp.addr);
-   p_arch_jump_label_transform_apply_kretprobe_state = 0x1;
+   p_arch_jump_label_transform_apply_kretprobe_state = 1;
 
-//   p_ret = 0x0; <- should be 0x0 anyway...
-
-p_install_arch_jump_label_transform_apply_hook_out:
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_install_arch_jump_label_transform_apply_hook> (p_ret => %d)\n",p_ret);
-
-   return p_ret;
+   return P_LKRG_SUCCESS;
 }
 
 
 void p_uninstall_arch_jump_label_transform_apply_hook(void) {
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Entering function <p_uninstall_arch_jump_label_transform_apply_hook>\n");
 
    if (!p_arch_jump_label_transform_apply_kretprobe_state) {
       p_print_log(P_LKRG_INFO, "[kretprobe] <%s> at 0x%lx is NOT installed\n",
@@ -283,12 +271,8 @@ void p_uninstall_arch_jump_label_transform_apply_hook(void) {
                   p_arch_jump_label_transform_apply_kretprobe.kp.symbol_name,
                   (unsigned long)p_arch_jump_label_transform_apply_kretprobe.kp.addr,
                   p_arch_jump_label_transform_apply_kretprobe.nmissed);
-      p_arch_jump_label_transform_apply_kretprobe_state = 0x0;
+      p_arch_jump_label_transform_apply_kretprobe_state = 0;
    }
-
-// STRONG_DEBUG
-   p_debug_log(P_LKRG_STRONG_DBG,
-          "Leaving function <p_uninstall_arch_jump_label_transform_apply_hook>\n");
 }
 
 #endif

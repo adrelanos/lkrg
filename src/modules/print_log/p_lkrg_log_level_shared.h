@@ -26,6 +26,15 @@
 // Do we want to provide debug information?
 #define P_LKRG_DEBUG
 
+/* Do we want to precisely track changes of 'off' flag per each process?
+ * If yes, uncomment it here */
+//#define P_LKRG_TASK_OFF_DEBUG
+
+// Do we want to precisely track all kernel .text section changes?
+// By default NO. If you want it (and print relevant information)
+// Uncomment it here
+//#define P_LKRG_JUMP_LABEL_STEXT_DEBUG
+
 // Debug every time we enter/exit notifiers function?
 // not recommended - will be too noisy for some notifiers! :)
 //#define P_LKRG_NOTIFIER_DBG

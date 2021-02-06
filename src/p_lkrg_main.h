@@ -60,13 +60,36 @@
 
 #include <linux/signal.h>
 #include <linux/timex.h>
+
+#include <linux/vmalloc.h>
+#include <linux/ftrace.h>
+
+#ifndef RHEL_RELEASE_VERSION
+#define RHEL_RELEASE_VERSION(a, b) (((a) << 8) + (b))
+#endif
+
+#if ( (LINUX_VERSION_CODE < KERNEL_VERSION(4,4,72)) && \
+      (!(defined(RHEL_RELEASE_CODE)) || \
+         RHEL_RELEASE_CODE < RHEL_RELEASE_VERSION(7, 4)))
+#define P_LKRG_CUSTOM_GET_RANDOM_LONG
+/* We use md5_transform() in our custom get_random_long() */
 #include <linux/cryptohash.h>
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
+#define p_kzfree kzfree
+#else
+#define p_kzfree kfree_sensitive
+#endif
 
 #include <linux/stacktrace.h>
 #include <asm/stacktrace.h>
 #include <asm/tlbflush.h>
 #if defined(CONFIG_X86) && defined(CONFIG_UNWINDER_ORC)
 #include <asm/unwind.h>
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+#include <linux/sched/task_stack.h>
 #endif
 
 //#define p_lkrg_read_only __attribute__((__section__(".data..p_lkrg_read_only"),aligned(PAGE_SIZE)))
@@ -132,7 +155,11 @@ typedef struct _p_lkrg_global_symbols_structure {
 #endif
    int (*p_is_kernel_text_address)(unsigned long p_addr);
    void (*p_get_seccomp_filter)(struct task_struct *p_task);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,9,0)
+   void (*p_put_seccomp_filter)(struct seccomp_filter *p_filter);
+#else
    void (*p_put_seccomp_filter)(struct task_struct *p_task);
+#endif
 #ifdef CONFIG_SECURITY_SELINUX
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 6, 0)
    int *p_selinux_enabled;
@@ -147,8 +174,8 @@ typedef struct _p_lkrg_global_symbols_structure {
 #endif
    int (*p_core_kernel_text)(unsigned long p_addr);
    pmd_t *(*p_mm_find_pmd)(struct mm_struct *mm, unsigned long address);
-   struct mutex *p_text_mutex;
    struct mutex *p_jump_label_mutex;
+   struct mutex *p_text_mutex;
    struct text_poke_loc **p_tp_vec;
    int *p_tp_vec_nr;
 #if defined(CONFIG_DYNAMIC_DEBUG)
@@ -159,12 +186,24 @@ typedef struct _p_lkrg_global_symbols_structure {
 #endif
 #endif
    struct list_head *p_global_modules;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,0)
-   struct mutex *p_kernfs_mutex;
-#endif
    struct kset **p_module_kset;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0)
+   void (*p_native_write_cr4)(unsigned long p_val);
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,9,0)
+   struct module* (*p_module_address)(unsigned long p_val);
+   struct module* (*p_module_text_address)(unsigned long p_val);
+#endif
    int (*p_kallsyms_on_each_symbol)(int (*)(void *, const char *, struct module *, unsigned long), void *);
+#if defined(CONFIG_FUNCTION_TRACER)
+   struct ftrace_rec_iter *(*p_ftrace_rec_iter_start)(void);
+   struct ftrace_rec_iter *(*p_ftrace_rec_iter_next)(struct ftrace_rec_iter *iter);
+   struct dyn_ftrace *(*p_ftrace_rec_iter_record)(struct ftrace_rec_iter *iter);
+   struct mutex *p_ftrace_lock;
+#endif
+   void (*p_wait_for_kprobe_optimizer)(void);
    struct module *p_find_me;
+   unsigned int p_state_init;
 
 } p_lkrg_global_syms;
 
@@ -206,11 +245,69 @@ extern p_ro_page p_ro;
 #define P_CTRL_ADDR &p_ro.p_lkrg_global_ctrl
 
 /*
- * RHEL support
+ * LKRG counter lock
  */
-#ifndef RHEL_RELEASE_VERSION
-#define RHEL_RELEASE_VERSION(a, b) (((a) << 8) + (b))
-#endif
+typedef struct p_lkrg_counter_lock {
+
+   atomic_t p_counter;
+   spinlock_t p_lock;
+
+} p_lkrg_counter_lock;
+
+/* Counter lock API */
+static inline void p_lkrg_counter_lock_init(p_lkrg_counter_lock *p_arg) {
+
+   spin_lock_init(&p_arg->p_lock);
+   smp_mb();
+   atomic_set(&p_arg->p_counter, 0);
+   smp_mb();
+}
+
+static inline unsigned long p_lkrg_counter_lock_trylock(p_lkrg_counter_lock *p_arg, unsigned long *p_flags) {
+
+   local_irq_save(*p_flags);
+   if (!spin_trylock(&p_arg->p_lock)) {
+      local_irq_restore(*p_flags);
+      return 0;
+   }
+   return 1;
+}
+
+static inline void p_lkrg_counter_lock_lock(p_lkrg_counter_lock *p_arg, unsigned long *p_flags) {
+
+   spin_lock_irqsave(&p_arg->p_lock, *p_flags);
+}
+
+static inline void p_lkrg_counter_lock_unlock(p_lkrg_counter_lock *p_arg, unsigned long *p_flags) {
+
+   spin_unlock_irqrestore(&p_arg->p_lock, *p_flags);
+}
+
+static inline void p_lkrg_counter_lock_val_inc(p_lkrg_counter_lock *p_arg) {
+
+   smp_mb();
+   atomic_inc(&p_arg->p_counter);
+   smp_mb();
+}
+
+static inline void p_lkrg_counter_lock_val_dec(p_lkrg_counter_lock *p_arg) {
+
+   smp_mb();
+   atomic_dec(&p_arg->p_counter);
+   smp_mb();
+}
+
+static inline int p_lkrg_counter_lock_val_read(p_lkrg_counter_lock *p_arg) {
+
+   register int p_ret;
+
+   smp_mb();
+   p_ret = atomic_read(&p_arg->p_counter);
+   smp_mb();
+
+   return p_ret;
+}
+/* End */
 
 /*
  * p_lkrg modules
@@ -223,13 +320,10 @@ extern p_ro_page p_ro;
 #include "modules/kmod/p_kmod.h"                              // Kernel's modules module
 #include "modules/notifiers/p_notifiers.h"                    // Notifiers module
 #include "modules/self-defense/hiding/p_hiding.h"             // Hiding module
+#include "modules/exploit_detection/p_exploit_detection.h"    // Exploit Detection
 #include "modules/wrap/p_struct_wrap.h"                       // Wrapping module
 #include "modules/comm_channel/p_comm_channel.h"              // Communication channel (sysctl) module
 
-/*
- * Exploit Detection
- */
-#include "modules/exploit_detection/p_exploit_detection.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0)
  #define __GFP_REPEAT   ((__force gfp_t)___GFP_RETRY_MAYFAIL)

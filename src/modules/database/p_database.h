@@ -45,7 +45,7 @@ typedef struct p_cpu_info {
    int online_CPUs;   // Might be active (because it's online) but it is NOT
                       // yet, so does NOT execute any task
    int possible_CPUs; // Physically possible CPUs handled by this kernel
-   int present_CPUs;  // Currently availble CPUs, but doesn't need to be used
+   int present_CPUs;  // Currently available CPUs, but doesn't need to be used
                       // by kernel at this time. Value is dynamically updated
                       // when CPU is hotplug
    int active_CPUs;   // Currently active CPUs - can execute tasks
@@ -86,6 +86,14 @@ typedef struct p_cpu_info {
 #include "JUMP_LABEL/p_arch_jump_label_transform/p_arch_jump_label_transform.h"
 #include "JUMP_LABEL/p_arch_jump_label_transform_apply/p_arch_jump_label_transform_apply.h"
 
+#if defined(CONFIG_FUNCTION_TRACER)
+/*
+ * FTRACE
+ */
+#include "FTRACE/p_ftrace_modify_all_code/p_ftrace_modify_all_code.h"
+#include "FTRACE/p_ftrace_enable_sysctl/p_ftrace_enable_sysctl.h"
+#endif
+
 enum p_jump_label_state {
 
    P_JUMP_LABEL_NONE,
@@ -103,12 +111,11 @@ struct p_jump_label {
    enum p_jump_label_state p_state;
    struct module *p_mod;
    unsigned long *p_mod_mask;
-   spinlock_t p_jl_lock;
 
 };
 
 /*
- * Main database structure conatining:
+ * Main database structure containing:
  * - memory hashes
  * - Critical addresses
  * - CPU specific information
@@ -151,6 +158,9 @@ typedef struct p_hash_database {
    uint64_t p_module_kobj_hash;
 
    p_hash_mem_block kernel_stext;         // .text
+#if defined(P_LKRG_JUMP_LABEL_STEXT_DEBUG)
+   char *kernel_stext_copy;               // copy of .text
+#endif
    p_hash_mem_block kernel_rodata;        // .rodata
    p_hash_mem_block kernel_iommu_table;   // IOMMU table
    p_hash_mem_block kernel_ex_table;      // Exception tale
@@ -170,13 +180,12 @@ int hash_from_iommu_table(void);
 
 static inline void p_text_section_lock(void) {
 
-   //jump_label_lock();
-/*
-   mutex_lock(P_SYM(p_jump_label_mutex));
-   mutex_lock(P_SYM(p_text_mutex));
-*/
-
-   while (!mutex_trylock(P_SYM(p_jump_label_mutex)))
+#if defined(CONFIG_DYNAMIC_FTRACE)
+   mutex_lock(P_SYM(p_ftrace_lock));
+#endif
+   /* We are heavily consuming module list here - take 'module_mutex' */
+   mutex_lock(&module_mutex);
+   while (mutex_is_locked(P_SYM(p_jump_label_mutex)))
       schedule();
    mutex_lock(P_SYM(p_text_mutex));
 }
@@ -184,9 +193,11 @@ static inline void p_text_section_lock(void) {
 static inline void p_text_section_unlock(void) {
 
    mutex_unlock(P_SYM(p_text_mutex));
-   mutex_unlock(P_SYM(p_jump_label_mutex));
-
-//   jump_label_unlock();
+   /* Release the 'module_mutex' */
+   mutex_unlock(&module_mutex);
+#if defined(CONFIG_DYNAMIC_FTRACE)
+   mutex_unlock(P_SYM(p_ftrace_lock));
+#endif
 }
 
 int p_create_database(void);
