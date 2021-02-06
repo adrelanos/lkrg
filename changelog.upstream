@@ -1,3 +1,787 @@
+commit 9b44ba49a49ea25e2aa8fb90f6e4d9d7231cc824
+Merge: a66d7c9 e43d2dd
+Author: Patrick Schleizer <adrelanos@whonix.org>
+Date:   Sat Feb 6 06:49:24 2021 -0500
+
+    Merge remote-tracking branch 'adam/main'
+
+commit e43d2dd525f014388c1f8cc0eb8a23f2ef07f415
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jan 19 20:39:50 2021 -0500
+
+    Fix security_bprm_committed_creds hook
+    
+    security_bprm_committed_creds does not return any value (void). LKRG's old
+    logic for handling exec* family verified return code. This is an incorrect
+    behavior for the current design. Fix it.
+
+commit 1a72c11cf50b26630041f12b4b32f274840b9824
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jan 19 01:03:10 2021 -0500
+
+    Disable ADDR_LIMIT verification during capable()
+
+commit d3276d45e7631288d7d7f060c315e1228160c560
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Jan 19 00:23:53 2021 -0500
+
+    Modify the logic how LKRG tracks the exec syscalls
+    
+    Since kernel 5.8 function search_binary_handler is not exported anymore.
+    On the aggressively optimized kernels it is possible that
+    `search_binary_handler` can be inlined. However, GCC can splits the
+    function to put the big part in its own function, which receives as a name
+    the original function name plus .part + .<some number>, and inlines the
+    rest in other functions.
+    
+    This is a very problematic behavior from the LKRG point of view and was
+    reported as #41 and #45. This commit fixes the problem by replacing the
+    'search_binary_handler' (or 'do_execveat_common') hook with
+    security_bprm_committing_creds and security_bprm_committed_creds.
+    Additionally, this change is desired from the security point of view.
+
+commit 76a9382bab557ebec79d018c2508f716a50ffc8a
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Jan 18 20:00:42 2021 -0500
+
+    Add synchronization with kprobe optimizer
+    
+    On the aggressively optimized kernels it is possible that kprobe optimizer
+    won't be fast enough to do the job before LKRG creates own database. This
+    is problematic because LKRG might snapshot hash of the kernel's .text
+    section with non-optimized own hooks. As soon as the kprobe optimizer
+    finishes the job, previously snapshoted hash won't be correct and LKRG will
+    detect this inconsistency.
+    To be able to correctly solve this unusual corner case problem, LKRG can
+    wait for kprobe optimizer before creating database.
+
+commit c5222df2db494968fb50ed96c4887cf661ffbfe4
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Jan 18 19:50:03 2021 -0500
+
+    Optimize initialization state variable
+
+commit 226ab5ed2e9ba5041b2ed0119a1bdba269ca18f4
+Author: RageLtMan <rageltman [at] sempervictus>
+Date:   Sun Jan 17 14:31:12 2021 -0500
+
+    Copy-builtin: use bash and correct depends
+
+commit 50285b051679d2e38e7fdeddb3f820caa4e72cda
+Author: Solar Designer <solar@openwall.com>
+Date:   Sun Jan 17 18:25:58 2021 +0100
+
+    Use module_init() and not late_initcall_sync() when building as module
+    
+    We switched to using late_initcall_sync() in order to have LKRG initialize
+    sufficiently late when it's linked into the kernel.  That change was a
+    no-op when building/loading LKRG as a module on recent kernels, because
+    their module.h defines late_initcall_sync() as an alias for module_init().
+    However, it broke LKRG on some older kernels, where late_initcall_sync()
+    wasn't defined for modules at all.
+    
+    This commit fixes that by explicitly using module_init() when building LKRG
+    as a module.  This change is a no-op on recent kernels.
+    
+    Fixes #37, updates ddc14c6544cb1639132b765fe6df72c3feba14aa
+
+commit 139645fe0d54afec2b2f5ddfbbefde47d68c0477
+Author: RageLtMan <rageltman [at] sempervictus>
+Date:   Sun Jan 17 02:45:23 2021 -0500
+
+    CONFIG_PAX_RANDKSTACK ^ P_VERIFY_ADDR_LIMIT
+    
+    There are unofficial versions of RANDKSTACK patches floating about
+    the web, including in VMWare's PhotonOS.
+    The randomized stack addresses conflict with LKRG's ADDR_LIMIT
+    checks a la:
+    ```
+    [  195.272462] [p_lkrg] <Exploit Detection> Detected ADDR_LIMIT
+    segment corruption! process[552 | sysctl] has different segment
+    address! [7ffffffff000 vs ffffffffffffffff]
+    ```
+    
+    Address this by ensuring that P_VERIFY_ADDR_LIMIT does not get
+    defined when CONFIG_PAX_RANDKSTACK is enabled.
+    
+    This is a strange edge-case, and normally wouldn't be submitted as
+    a pull request to upstream projects, except that users seeking to
+    harden their kernels with public code are likely to run across
+    LKRG and some links to the PhotonOS patches or similar extracts
+    from Grsecurity's old patchsets. The commit is a no-op in 99% of
+    cases, but may result in one less bug report over the next decade.
+
+commit b2d193b5ec7cb8aee925c0990e356f0b9c35ffed
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jan 14 21:40:49 2021 -0500
+
+    [FTRACE] Add dependency on CONFIG_DYNAMIC_FTRACE
+    
+    Based on #40 it looks like some people compile the kernel with
+    CONFIG_FTRACE and CONFIG_FUNCTION_TRACER but don't enable
+    CONFIG_DYNAMIC_FTRACE. Let's try to check that in this commit.
+
+commit 8814ebe8043d3ff4d7efbb00baacebe6a73bd8f4
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jan 13 17:46:11 2021 -0500
+
+    Fix issue #38
+
+commit 9dcee1e9488287f249244fa90c717a1c357e0c6e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jan 13 00:04:02 2021 -0500
+
+    Add support for the kernels 5.11+
+    
+    Since kernel 5.11, on x86(-64) architecture TIF_SECCOMP flag is not used
+    anymore to track SECCOMP state per thread. This commit updates the code
+    accordingly
+
+commit a556e395f7b007086afd0f88cf1c58a9e5bbc3d8
+Author: Solar Designer <solar@openwall.com>
+Date:   Sat Jan 9 20:00:05 2021 +0100
+
+    README: drop pint_validate=2 performance overhead description
+
+commit 2dc44292883f65f5a62a388b71b1eaa5ff32917e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Jan 8 17:24:20 2021 -0500
+
+    Minor fix in README
+
+commit 0f864e9e445bb35f5477f89660a33e2a249e08df
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Jan 8 17:18:29 2021 -0500
+
+    Update README to refelct f7335c
+
+commit f7335cf7127ebdc44fbdc2618bfdc9c952a77780
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Jan 8 16:18:50 2021 -0500
+
+    Remove validation of waking-up tasks
+    
+    Current LKRG's architecture has small benefits from validation waking-up
+    tasks. However, it might have noticeable performance impact. After this
+    commit, 'pint_validate' option 2 has the same meaning as option 1.
+
+commit 6cf9e241bb7f095a4e1bd0f3e9d7fd73203dc0fc
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Jan 4 21:52:06 2021 -0500
+
+    Fix an issue discussed at #35
+    
+    Since kernel 5.8 'search_binary_handler' function does not have EXPORT
+    attribute and LKRG can't place correct hooks. In such case use
+    'do_execveat_common' function instead.
+
+commit 1f9809db4bed4e33fcc3db31270def6458654199
+Author: RageLtMan <rageltman [at] sempervictus>
+Date:   Wed Dec 30 17:12:53 2020 -0500
+
+    In-tree: fix for 58b9ec06
+    
+    After 58b9ec06, the script which copies module files into the
+    kernel source tree does not properly capture the files to be built
+    into p_lkrg.o.
+    Fix the awk expression performing the capture to adjust for the
+    new $(TARGET)-obj syntax and sed in-place to restore the original
+    name for in-tree build.
+
+commit e0547c4d7c7f3e8ac239e3d36cfc9907eabba5cd
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Dec 30 17:36:13 2020 -0500
+
+    Fix compilation for kernel 5.10+
+
+commit 1299583b564eeac5f9eec0b74ca59224d8c2498e
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Dec 30 15:35:43 2020 -0500
+
+    Fix commit: c049fa569598b277737837a8411b1535a92eaa66
+
+commit 58b9ec06e52ccf55132f72cab988d5ec043ef13c
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Dec 29 18:21:39 2020 -0500
+
+    Integrate LKRG with 'out-of-tree' framework
+    
+    Mikhail Klementev created an amazing framework which allows to automatically
+    verify LKRG under various kernel versions. Let's integrate LKRG's code-base
+    with it. We also have a simple configuration file to run it under simulated
+    Ubuntu 18.04 environment.
+
+commit c049fa569598b277737837a8411b1535a92eaa66
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Dec 29 17:46:48 2020 -0500
+
+    Replace exec* syscall hooks with 'search_binary_handler'
+    
+    We can significantly simplify our logic and hook only one function
+    instead of every syscall's entrypoint for exec*.
+
+commit d3118e45e66086190fa0a3a25eee93fd42e78bed
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Dec 24 17:17:02 2020 -0500
+
+    Minor fixes
+
+commit 2de84506333158bb5301c1d87bf21200986ae037
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Dec 23 19:49:41 2020 -0500
+
+    Snapshot ADDR_LIMIT as task's attribute
+    
+    Many exploits use culnerability to corrupt 'addr_limit' and achieve full R/W primitive in the kernel. This is a 'known' technique. We can't verify 'addr_limit' as part of normal verification process because kernel might legitimately modify it via call set_fs(KERNEL..). However, there are places where we can enforce such policy, e.g. during generic_permission() or capable() hook as well as at the syscall hook. I'm adding such verification on execve() syscall as well. Since kernel 5.10 on x86 platform set_fs/get_fs API is removed (and addr_limit variable) but it's not the case for ARM architecture. Moreover, many Android exploit relies on 'addr_limit' corruption. This beta-version of 'addr_limit' verification can be effective and important feature.
+
+commit 89697f32bc7fa0f09395554bcaa70e861e3e15a1
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Dec 22 17:30:56 2020 -0500
+
+    Minor simplification
+    
+    Minor simplifaction for dynamic support of OverlayFS
+
+commit 9ccf69d06d9f1b5bda4e2149807422118af9d123
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Dec 21 15:43:18 2020 -0500
+
+    Add support for the delayed docker/container initialization
+    
+    Docker/containers require 'overlay' or 'overlay2' module for supporting storage/scratchspaces. To be able to correctly support docker environment LKRG needs to hook 'ovl_create_or_link' function from these modules. However, it is possible that during LKRG initialization, 'overlay[2]' is not loaded yet because of the delayed docker/containers initialization. In such case we will produce FP. This commit changes the requirement of loading 'overlay[2]' module before loading LKRG. Now, we are dynamically add necessary hooks.
+
+commit 42d648a59212f10e617eff449b5eefdc4be4714c
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Dec 21 15:34:05 2020 -0500
+
+    Enforce verification during internal RO-page modification
+    
+    When we 'open' our internal RO-page for modification we should verify if integrity of the system is fine. Add verification during this operation.
+
+commit f7694621971518c185f29e80f4ffd1a6c377c818
+Author: RageLtMan <rageltman [at] sempervictus>
+Date:   Tue Dec 15 02:23:54 2020 -0500
+
+    Build LKRG in-tree using copy-builtin.sh
+    
+    DKMS is not always desirable on a system which one intends to
+    harden from local attackers. The build-chain creates a wide local
+    attack surface and can be used to build kmode rootkits and other
+    fun toys for red team. There are also space, performance,
+    and security considerations such as leaving RANDSTRUCT seeds
+    around in headers which can be addressed by bringing the module
+    in with the kernel package.
+    
+    In order to avoid this, and take advantage of pending advances
+    in LTO, KCFI, and other methods depending on or benefitting from
+    having all of the code available at initial compile/link-time, a
+    script has been added to update the desired kernel tree with the
+    LKRG source code and relevant Makefile and Kconfig directives.
+    
+    Since LKRG is still in active development, this script pulls all
+    relevant content and the current commit hash to let the kernel
+    maintainers using it keep aware of how far they've fallen behind
+    and see if subsequent commits merit a rebuild of the in-tree code.
+    
+    Testing:
+     Build-tested against linux-hardened 5.4.84.a as module and linked
+    directly into the kernel.
+     Runtime testing with both build scenarios.
+
+commit ddc14c6544cb1639132b765fe6df72c3feba14aa
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Dec 19 00:56:18 2020 -0500
+
+    Replace module_init with late_initcall_sync
+    
+    We want to be loaded after Linux kernel is done with the majority of the initialization work. Otherwise, some critical kernel attributes (from LKRG's perspective), like RO data, might be still dynamically modified without informing LKRG. This might produce FP.
+
+commit cc1aa17a298a023ae6a15543320b36ad1eb2e417
+Author: Vladimir D. Seleznev <vseleznv@altlinux.org>
+Date:   Wed Dec 16 19:09:12 2020 +0300
+
+    define p_kzfree() wrapper
+    
+    p_kzfree() wraps kzfree() call for kernel < 5.10 and kfree_sensitive()
+    in the other case. This reflects the changes made in kernel since
+    23224e45004ed84c8466fd1e8e5860f541187029 and fix the build against
+    kernel 5.10.
+
+commit 47d6aca4d424f21044f2b890c245fccfad3a40f3
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Dec 10 01:38:12 2020 -0500
+
+    Simplify 'do_exit' hook
+    
+    We don't need to do such verification here. Process is dying anyway so the impact of verification is low.
+
+commit b175832dba4df1aca699da01289c715ff157d7ef
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Dec 10 01:35:07 2020 -0500
+
+    FTRACE: Simplify 'ftrace_enable_sysctl' hook
+    
+    We don't need to use extra cycles for that logic
+
+commit 6be46f80dd6f6517ef4def20dee4a9037fe01ced
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Dec 5 12:05:29 2020 -0500
+
+    Fix the logic in security_ptrace_access hook
+    
+    Function security_ptrace_access() can be called internally by the kernel. We must take this into account.
+
+commit 47804120c371aa7673b47d9c34ecfe19026a3c52
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Dec 3 15:07:40 2020 -0500
+
+    Fix a gentle bug when compiled with P_LKRG_TASK_OFF_DEBUG
+    
+    P_LKRG_TASK_OFF_DEBUG introduces extra lines of code which was not taken into account for seccomp() and namespace API. This commit fixes it. Additionally, we are adding extra information in case of corruption (dump_stack()).
+
+commit d051bc28026729f50b2a38051d55e47e60db4e04
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Dec 1 16:47:19 2020 -0500
+
+    Fix debug task logic for seccomp
+    
+    Track child in case of SECCOMP_FILTER_FLAG_TSYNC flag
+
+commit 24f4156516b839da1c025639ac4a9bae7bdf3747
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Nov 29 20:47:47 2020 -0500
+
+    Add task debugging infrastructure
+    
+    This is a relatively heavy feature. It introduces a possibility of having a 'ring-buffer' per each tracked task in the kernel. Such buffer keeps a history of important events (from LKRG perspective) related to this task
+
+commit 1b84b006c753982bc9772083a0cc5ac869db9414
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Fri Nov 27 18:36:58 2020 +0100
+
+    github: Add a pull request template
+    
+    This will help us to document what was changed and what
+    tests we have run.
+
+commit 7eae8d3101ced6c004820ef6812fe82da4c9299c
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Thu Nov 26 13:57:17 2020 +0100
+
+    UMH: Allow all the pathnames listed in p_umh_global
+    
+    Previously, we'd only allow pathnames present in the filesystem at LKRG
+    startup. Now we don't require them to be present in the filesystem
+
+commit 3cd05c371f92fc8983f232c34fda6c7b163897fb
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Nov 25 02:17:35 2020 -0500
+
+    Change locking logic
+    
+    KPROBE optimizer might replace KPROBE with FTRACE. If we are in the middle of initialization current logic might be incompatible. This patch fixes it.
+
+commit 6acc31f31436e6c86eb6305f88ad9057f4aaff5e
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Nov 19 12:47:07 2020 +0100
+
+    UMH: allow /sbin/request-key as discussed in #11
+
+commit 3f76f5148b184e02b0b5b24bb1e8bac0e96a3376
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Nov 16 18:56:13 2020 -0500
+
+    Fix forgotten code-cleanup
+    
+    One of the commit changed the way how we debug the code. Fix forgotten path for compilation with P_LKRG_JUMP_LABEL_STEXT_DEBUG
+
+commit 65153f466c4390a80420feb0c82d4c9d7fb35fe5
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Nov 16 18:46:13 2020 -0500
+
+    [FTRACE] Add forgoten check for kernel version
+    
+    '__module_text_address' is not exported since 5.9+
+
+commit 4cfb2b3474b813b0f2c424bbbcd7c1c456fb8f6e
+Author: disrupttheflow <68149206+disrupttheflow@users.noreply.github.com>
+Date:   Mon Nov 16 12:28:23 2020 +0000
+
+    Add correct repository to clone from in README (#25)
+
+commit 645983fbf687c4bddb3c62c19a37d7db380bf927
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Fri Nov 6 19:29:40 2020 +0100
+
+    ptrace: replace ptrace kprobes with security_ptrace_access_check
+
+commit ca8237ed2251a6f4ae03fe8e549662465f26d347
+Merge: 37d5520 5db3f98
+Author: Adam 'pi3' Zabrocki <65244445+Adam-pi3@users.noreply.github.com>
+Date:   Sat Nov 7 08:52:18 2020 -0800
+
+    Merge pull request #23 from oshogbo/kill
+    
+    umh: Kill process using the proper SIGKILL signal.
+
+commit 5db3f983cb3928b2457e17071317abbebb332d34
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Wed Nov 4 18:55:09 2020 +0100
+
+    umh: Kill process using the proper SIGKILL signal.
+    
+    When we detect an invalid binary, we forbid it execution by changing the
+    subprocess execution path with slashes.
+    On some kernels, this may not work because we have to map the memory page as
+    writable. At this moment of execution, we can stop executing the process using
+    the froce_sig to send signals. The send_sig_info will not arrive at the right
+    time.
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit 37d5520cd06d5f6941f8f36f66d16e5a7ae2bb44
+Merge: f98da1b ad681d3
+Author: Adam 'pi3' Zabrocki <65244445+Adam-pi3@users.noreply.github.com>
+Date:   Tue Nov 3 10:11:52 2020 -0800
+
+    Merge pull request #22 from oshogbo/drop0
+    
+    Drop 0x prefix in new code.
+
+commit ad681d32157c886f1be5f44352c9dc2e06e87b60
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Tue Nov 3 18:30:03 2020 +0100
+
+    Drop 0x prefix in new code.
+
+commit f98da1b17c01c168ec163b0349327661adc9e38d
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Nov 2 16:09:07 2020 -0500
+
+    Simplify synchronization with JUMP_LABEL engine
+    
+    We don't need to introduce custom LKRG-counter lock to synchronize with JUMP_LABEL engine and avoid potential deadlock with FTRACE. We can check if jump_label lock is taken after acquiring ftrace lock and before taking text_mutex.
+    This simplification changes p_text_section_(un)lock API.
+    
+    This also fixes problem reported by Jacek
+
+commit 83cb64640a70273f8c73c6d9e6b02cf1a094b054
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Nov 2 01:43:02 2020 -0500
+
+    Fix p_lkrg_counter_lock_trylock() API
+    
+    spin_trylock() disables preemption under the hood.
+
+commit 9241d2354a1816c1c00cf14c1d607ab7e99a71d9
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Nov 1 21:58:28 2020 -0500
+
+    Update JUMP_LABEL and FTRACE debug messages
+    
+    FTRACE might generate dynamic trampoline which is not part of .text section. This is not abnormal situation anymore.
+
+commit 6857d18aeab5fffdb134d3d6382da11b33dd7de7
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Nov 1 21:40:46 2020 -0500
+
+    Add FTRACE support
+    
+    1) We are hooking into FTRACE's internal functions to be able to monitor when new modifications are executed and react accordingly.
+    2) Linux kernel has bugs in FTRACE code. The LKRG may highlight them.
+    3) We are introducing 'p_state_init' variable to track when full LKRG's initialization is complete.
+
+commit 477be5d84cbedbace14d2ea132ad2c8a1a286151
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Oct 30 14:34:53 2020 -0400
+
+    Add LKRG's counter lock around *JUMP_LABEL engine
+    
+    1) This is necessary for future FTRACE support. FTRACE is not fully synchronized with JUMP_LABEL (which I think is a buggy logic in the kernel). However, we can manually add such logic. The way how text_mutex is used by both subsystems makes it prone to deadlock if 3rd system wants to sync with both of them.
+    2) New lock efnorces changes in p_text_section_(un)lock API which we do in the same commit
+    3) Introduce new LKRG's counter lock API - trylock
+    4) Add a few minor changes:
+      - notrace attribute (probably, we need to add such attributes to majority of our functions)
+      - add information about module name in case of KMOD notifier activity
+
+commit 66e35e67d0c14b714acdf6656746b94731e5da8e
+Author: Solar Designer <solar@openwall.com>
+Date:   Wed Oct 28 19:50:51 2020 +0100
+
+    Travis CI: Disable build on Ubuntu Focal
+    
+    Apparently, something broke on Travis CI, so this build wouldn't even
+    start lately.
+
+commit 1f07ebd7fc656d1f6566be1cbd52e535602237c5
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Tue Oct 27 20:34:52 2020 +0100
+
+    lkrg: drop the 0x prefix.
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit 83b31857f8cd032a9d2eb750ab6a55c7809e42de
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Wed Oct 21 18:20:18 2020 +0200
+
+    Require a zero return from register_kretprobe(), not just non-negative
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit e79c76548f3d73378b2ebafa4acb72ff587c802a
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Wed Oct 21 18:13:45 2020 +0200
+
+    p_ed_pcfi_validate_sp: Validate all conditions before returning
+    
+    We would want to have in the logs all violations, not just the first one.
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit f9f215d17b67c7977bc433d199aae03a4ecb57b3
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Oct 26 23:02:12 2020 -0400
+
+    Modify p_text_section_(un)lock API
+    
+    Move 'module_mutex' under text section (un)lock API.
+
+commit cb882e83a7e7e4ffba998dcca12fdfcd25bf2789
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Oct 26 01:56:05 2020 -0400
+
+    Remove dependency on 'kernfs' mutex
+    
+    Current LKRG's design does not need to be dependent on kernfs mutex. Remove it.
+
+commit 0cf7e11bf75fa97413753a42a369013d631cc814
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Oct 25 20:39:38 2020 -0400
+
+    Modify p_lkrg_open* API
+    
+    We don't need text section lock here
+
+commit 339f340b6119920326a70e7fd1e773fd5921cd8f
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Oct 25 19:54:19 2020 -0400
+
+    Change SELinux-type lock to be global LKRG-counter lock
+    
+    This type of locking idea is useful in other situations as well
+
+commit 069e10df4d3874cd0844e7a525fb256fdb2be95b
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Fri Sep 18 19:23:30 2020 +0200
+
+    Rework debug logging of entry and return from functions
+    
+    Use instrumentation.  This reduces source code size by over 10%.
+    
+    Signed-off-by: Mariusz Zaborski <oshogbo@vexillium.org>
+
+commit c7d427de476920f0585532ad57ee4280f083bf7f
+Author: 0xC0ncord <me@concord.sh>
+Date:   Fri Oct 16 21:00:25 2020 -0400
+
+    Fix resolution and usage of put_seccomp_filter on Linux >= 5.9
+
+commit 24d7117647d0f2406faba7fba19ccc3d1b82d859
+Author: 0xC0ncord <me@concord.sh>
+Date:   Fri Oct 16 20:59:20 2020 -0400
+
+    Dynamically resolve __module_address and __module_text_address on Linux
+    >= 5.9
+
+commit a46e7b0ae1a24e6a32c48090177d5934b4050e22
+Author: 0xC0ncord <me@concord.sh>
+Date:   Fri Oct 16 20:55:15 2020 -0400
+
+    Fix checking of umh in-memory files on Linux >= 5.9
+
+commit 330bd59fb74de4b73d5b34eb40657295d6f1ef54
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Oct 11 14:22:29 2020 -0400
+
+    Remove dependency on 'jump_label_mutex'
+    
+    With the current design of JUMP_LABEL support we do not need to manually take this mutex. Our hooks are deep enough to be protected and integrity routine depends on text mutext
+
+commit fa7857a7ea73ca00265323dc9a2828c34a0dc045
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Oct 10 21:30:34 2020 -0400
+
+    Minor change in deregister function
+    
+    Move arch-specific kprobe deregistration close to ED.
+
+commit 1b6d98e123b2e576f9723efdb41b3dd4acfc1946
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Sep 18 23:24:43 2020 +0200
+
+    Detect any changes of UIDs/GIDs, not just lowering of them
+    
+    The limited detection was an inadvertent leftover from very early stages of
+    LKRG development.  Reported by Vadim Andreev.
+
+commit 372bb0cdbbf6719f67ccce478499bcb717c5683a
+Author: William <wsandin@gmail.com>
+Date:   Fri Sep 18 00:06:00 2020 +0100
+
+    Log file permissions in octal format
+
+commit b51415b71738f5f34f117818c673be9bbc7a91bc
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Sep 17 21:43:15 2020 +0200
+
+    Initial Travis CI configuration
+
+commit ef4d2c5f0b33366e8a6d22da07c9d7cb3b389883
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Aug 31 15:05:00 2020 -0400
+
+    Change SELinux synchronization logic
+    
+    Introduce new type of SELinux lock type - p_lkrg_selinux_lock. Verification routine can take this lock only when atomic counter is zero. This means there are no other consumers of SELinux variables
+
+commit 6f700b5b08b5a0fbc5fa41e1ba1908923a29eca9
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Aug 27 21:59:16 2020 -0400
+
+    Add support for RHEL 8.2
+    
+    New kernels for RHEL 8.2 backported JUMP_LABEL batch-mode feature. Add support for it.
+
+commit a31161663313b004a2cd69a4a0b02695242fb9f7
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Aug 27 21:55:02 2020 -0400
+
+    Introduce P_LKRG_JUMP_LABEL_STEXT_DEBUG compilation flag.
+    
+    If we want to track all changes in kernel core .text section and when modification happens we want to know which exactly bytes were modified, which offset and what's the symbol corelated to it, we can compile LKRG with this feature. Disabled by default. It's mostly useful for debugging.
+
+commit 2404d32a19a563bfc961013c621113339e697dc2
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Aug 27 21:18:58 2020 -0400
+
+    Don't disable preemption.
+    
+    We don't need to disable preemption in this code path.
+
+commit 73e923b5b01cb931f4ae1ecc3b87a76c9d230548
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Aug 27 21:15:29 2020 -0400
+
+    Fix failure path
+    
+    If error appears during database creation, we might deadlock system since we do not unlock text section
+
+commit 4adc39fe684028a364715289fafa5608bcceb697
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Aug 25 11:53:52 2020 -0400
+
+    Remove internal JL sync lock
+    
+    It's OK to remove such lock, since LKRG .text section validation is syncing with the kernel through JL mutex and .text mutex. There is one corner case where these mutexes are not taken by the kernel when new kernel module might be compiled without long nops. In such case, Linux kernel might modify such .text and 'inject' long-nops where is needed, however, it is done when new module has UNFORMED state. UNFORMED modules can't be verified yet so we are fine.
+
+commit 072a1b8367f187e023447eea3067600a4aa49355
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Tue Aug 18 22:26:54 2020 +0300
+
+    Fix implicit declaration of function 'task_stack_page' on arm
+    
+    Due to kernel commit f3ac60671954c ("sched/headers: Move task-stack
+    related APIs from <linux/sched.h> to <linux/sched/task_stack.h>") (Linux
+    v4.11) `linux/sched/task_stack.h' should be included to access
+    `task_stack_page'.
+    
+    Compilation failure is appearing on armv8l arch:
+    
+      In file included from ./include/linux/prefetch.h:15,
+                       from ./arch/arm/include/asm/atomic.h:12,
+                       from ./include/linux/atomic.h:7,
+                       from ./include/asm-generic/bitops/lock.h:5,
+                       from ./arch/arm/include/asm/bitops.h:243,
+                       from ./include/linux/bitops.h:26,
+                       from ./include/linux/kernel.h:12,
+                       from /usr/src/RPM/BUILD/lkrg-0.8.1/src/modules/exploit_detection/../../p_lkrg_main.h:23,
+                       from /usr/src/RPM/BUILD/lkrg-0.8.1/src/modules/exploit_detection/p_exploit_detection.c:18:
+      /usr/src/RPM/BUILD/lkrg-0.8.1/src/modules/exploit_detection/p_exploit_detection.c: In function 'p_iterate_processes':
+      ./arch/arm/include/asm/processor.h:99:40: error: implicit declaration of function 'task_stack_page'; did you mean 'walk_stackframe'? [-Werror=implicit-function-declaration]
+         99 |  ((struct pt_regs *)(THREAD_START_SP + task_stack_page(p)) - 1)
+            |                                        ^~~~~~~~~~~~~~~
+      /usr/src/RPM/BUILD/lkrg-0.8.1/src/modules/exploit_detection/p_exploit_detection.c:779:30: note: in expansion of macro 'task_pt_regs'
+        779 |                p_regs_set_ip(task_pt_regs(p_tmp), -1);
+            |                              ^~~~~~~~~~~~
+      cc1: some warnings being treated as errors
+      make[1]: *** [scripts/Makefile.build:265: /usr/src/RPM/BUILD/lkrg-0.8.1/src/modules/exploit_detection/p_exploit_detection.o] Error 1
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 2648a1d607d97aa7c221d3073b6efefa0f5f62cd
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Wed Aug 19 00:18:56 2020 +0300
+
+    Various spelling and grammar corrections (#7)
+    
+    * Various spelling corrections by codespell 1.17.1
+    * Various grammar corrections
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+    Co-authored-by: Solar Designer <solar@openwall.com>
+
+commit 671b079eb985d6b2b24fb943f39cdf48bfce62d6
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Aug 16 13:38:24 2020 -0400
+
+    Since kernel 5.8 function native_write_cr4 is not exported anymore. We could write own function which modifies CR4, however, we don't want to introduce new potential gadgets. Instead we dynamically resolve it to fix this problem.
+
+commit 8d926b99fea47fa01e1d563b2ae71fb21cc42867
+Author: Solar Designer <solar@openwall.com>
+Date:   Wed Aug 5 18:19:32 2020 +0200
+
+    Fix build with non-RHEL kernels broken with the previous commit
+
+commit b459b334e6a1020732541840957ffefb2d1873df
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Aug 4 21:48:36 2020 +0200
+
+    Don't include linux/cryptohash.h on recent kernels
+    
+    This fixes LKRG build on Linux 5.8+, which renamed that header file.  Thanks to
+    Andy Lavr for reporting this problem and suggesting a (different) fix, which
+    made us revisit our use of that header file.
+    
+    We only need that header file on older kernels (< 4.4.72 or < RHEL 7.4) for the
+    one use of md5_transform() in get_random_long().  On newer kernels, we simply
+    use the kernel-provided get_random_long().  Further, 5.8's crypto/sha.h doesn't
+    declare md5_transform() anyway (linux/cryptohash.h on much older kernels did).
+
+commit 32fc7d27ae81cc5254e4c1f28c4e7b05c157bb63
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jul 15 20:26:23 2020 -0400
+
+    New RHEL kernels define 'struct stack_trace' by themselves. Take this into account
+
+commit a66d7c98f175ae919d5b1d706422f29df320356c
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Sat Jul 11 08:07:54 2020 -0400
+
+    readme
+
+commit 7cda1f03c5d1fc71965b3498727eba39147ebcb5
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed Jul 8 13:21:06 2020 -0400
+
+    bumped changelog version
+
+commit 8cc88b6447496ba443ecd11e745f7697dc259608
+Author: Patrick Schleizer <adrelanos@riseup.net>
+Date:   Wed Jul 8 13:19:59 2020 -0400
+
+    remove no longer existing INSTALL file
+
 commit 8ae4d9b1762598233aeff97090aaf2351b20a194
 Author: Patrick Schleizer <adrelanos@riseup.net>
 Date:   Wed Jul 8 13:12:18 2020 -0400
