@@ -1,10 +1,10 @@
-## Copyright (C) 2019 - 2020 ENCRYPTED SUPPORT LP <adrelanos@riseup.net>
+## Copyright (C) 2019 - 2021 ENCRYPTED SUPPORT LP <adrelanos@whonix.org>
 ## See the file COPYING for copying conditions.
 
 Source: lkrg
 Section: kernel
 Priority: optional
-Maintainer: Patrick Schleizer <adrelanos@riseup.net>
+Maintainer: Patrick Schleizer <adrelanos@whonix.org>
 Build-Depends: debhelper (>= 12), dkms
 Homepage: https://www.whonix.org/wiki/Linux_Kernel_Runtime_Guard_LKRG
 Vcs-Browser: https://github.com/Whonix/lkrg
