@@ -1,3 +1,16 @@
+commit d5531c50bef38fe04b76e43f9e4bb21e213e8ae8
+Merge: 15b9ebf c578e9f
+Author: Patrick Schleizer <adrelanos@whonix.org>
+Date:   Wed May 25 09:06:50 2022 -0400
+
+    Merge tag 'v0.9.3'
+
+commit 15b9ebf281ac2e17431eb74780b60bb0ae818784
+Author: Patrick Schleizer <adrelanos@whonix.org>
+Date:   Wed May 25 06:07:00 2022 -0400
+
+    bumped changelog version
+
 commit 8edad52ad6c9ac92bb6322fe153c1229ceabf320
 Author: Patrick Schleizer <adrelanos@whonix.org>
 Date:   Fri May 20 15:27:08 2022 -0400
@@ -10,11 +23,291 @@ Date:   Fri May 20 14:46:36 2022 -0400
 
     copyright
 
+commit c578e9f786299b67ffd62057b4534b0bf4fb7ece
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Apr 21 15:17:01 2022 +0200
+
+    LKRG 0.9.3
+
+commit 2a028ad89cd00554e557cf111ba2d39aa0eb48e7
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Tue Apr 19 01:02:20 2022 +0300
+
+    CI: Run boot-tests script with UMH test
+    
+    Trigger loading of `vhost_vsock` module by the kernel, which uses UMH
+    to call `modprobe`.
+    
+    As a side effect copy source into /lkrg of mkosi boot image.
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 141eef68f968786ef5c111769a50e84b9d2d767a
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Wed Apr 13 19:49:24 2022 +0000
+
+    debug: fix tracing security_bprm_committing_creds
+    
+    Fix spelling in the debug lookup table.
+    Make ret and entry functions available for tracing.
+
+commit a422422519df18c00437b75124dd6fd43861512e
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Wed Apr 13 19:45:23 2022 +0000
+
+    debug: fix tracing security_bprm_committed_creds
+    
+    Mart the p_security_bprm_committed_creds function as traceable in
+    debug builds.
+    The P_LKRG_DEBUG_RULE_KPROBE macro creates rules for entry and ret
+    functions. This function doesn't have a entry function, so we have
+    to use P_LKRG_DEBUG_RULE macro.
+
+commit 3c67907150711f2aa1610d03dfd3b597dc480749
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Wed Apr 13 19:41:19 2022 +0000
+
+    debug: Introduce LKRG_DEBUG_TRACE
+    
+    LKRG_DEBUG_TRACE in production builds adds no trace symbols.
+    In the case of the debug, the attribute is removed.
+
+commit 0cf357d9c08588ed0dd180a52bb953378f9ea948
+Author: Mariusz Zaborski <oshogbo@vexillium.org>
+Date:   Wed Apr 13 11:17:28 2022 +0000
+
+    make: introduce an option to build LKRG with debug
+
+commit bad514ed9e04e8ef4c93ecfed26787478b908f5d
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Apr 12 23:04:43 2022 +0200
+
+    Workaround a CONFIG_KRETPROBE_ON_RETHOOK likely-bug in the kernel
+    
+    Fixed #174
+
 commit 980d85505df4d3fb7f79ceb8819839ee0441115b
 Author: Patrick Schleizer <adrelanos@whonix.org>
 Date:   Sun Apr 10 12:40:13 2022 -0400
 
     readme
+
+commit 43db5f19fca259feb1962f6db33382348cbc8320
+Author: Solar Designer <solar@openwall.com>
+Date:   Sun Mar 27 17:56:00 2022 +0200
+
+    Fix build on post-5.17 kernels (avoid usage of mm_segment_t)
+    
+    Fixes #170
+
+commit b941067b7e20bf26c8700268770cc23848e4e7a8
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Mar 15 20:13:56 2022 +0100
+
+    CHANGES, README: Update with major changes since 0.9.2
+
+commit 8b6969a4fc86f68d4ce5b13bcd60c638d31c7524
+Author: Solar Designer <solar@openwall.com>
+Date:   Wed Feb 23 16:19:52 2022 +0100
+
+    x86 IDT dumping: Code cleanup
+
+commit 8d29e5a7c643308462c62319bfff9d2333b2e8d7
+Author: Solar Designer <solar@openwall.com>
+Date:   Wed Feb 23 16:12:52 2022 +0100
+
+    x86-64 IDT dumping: Support Xen PV without UMIP
+    
+    Fixes #159
+
+commit 24dc6c40473ac4dced7c68da73d42a35ef02bfa5
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Tue Feb 22 23:30:50 2022 +0300
+
+    CI: Add quirk to avoid mkosi misdetection of KVM on GA
+    
+    Intermittent GA error:
+    
+      Running command:
+      qemu-system-x86_64 -machine type=q35,accel=kvm,smm=off -smp 2 -m 1G ... -cpu host ...
+    
+      7lSeaBIOS (version 1.13.0-1ubuntu1.1)
+      Booting from Hard Disk...
+      [    0.0KVM: entry failed, hardware error 0xffffffff
+      ...
+      Error: Process completed with exit code 1.
+    
+    Reported-by: Solar Designer <solar@openwall.com>
+    Link: https://github.com/lkrg-org/lkrg/issues/132#issuecomment-1048090592
+    Link: https://github.com/systemd/mkosi/issues/914
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 0a171c644298cacf362e89e3d3d5e324f6d6d410
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Tue Feb 22 23:24:51 2022 +0300
+
+    CI: Add bionic to mkosi boot test
+    
+    Bionic EOL is @ April 2028.
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 5fededdf466d1c483e7f19659efcf0b86207dc01
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Tue Feb 22 05:46:03 2022 +0000
+
+    Fix compilation warnings
+    
+    This commit addresses #160 and fixes compilation for kernels < 5.10
+
+commit 5909100d51de09a5aa8245703a0d61f665c9d29c
+Author: RageLtMan <rageltman [at] sempervictus>
+Date:   Fri Feb 18 12:29:42 2022 -0500
+
+    copy-builtin.sh: Drop unneeded pushd/popd
+
+commit afc96f0218d6e1074a90825308b220157cadbd2f
+Author: RageLtMan <rageltman [at] sempervictus>
+Date:   Thu Feb 17 15:16:42 2022 -0500
+
+    Add explicit exports to ensure symbols for LKRG
+    
+    Several kernel patches appear to be optimizing-out the symbols LKRG
+    needs to resolve at run-time to operate properly, as per Adam's
+    comment: github.com//issues/135#issuecomment-1018693257.
+    
+    Keeping an actual diff of the relevant symbol changes is fragile as
+    the diffs may not apply cleanly to every kernel version out there.
+    To mitigate this concern while providing a way for users who build
+    their own kernels to preserve these symbols for LKRG, make a shell
+    script which echoes the relevant export macro statements into the
+    source files where the symbols are defined.
+
+commit c58f67b0e12c19f930f84bc241093281d6209160
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Wed Feb 2 00:20:47 2022 +0300
+
+    CI: Remove official Centos 8 docker build test
+    
+    Centos 8 is not meant to be officially supported after 2021-12-31.
+    We already have Rocky Linux and AlmaLinux instead.
+    
+    Yum install error message:
+    
+      CentOS Linux 8 - AppStream                       67  B/s |  38  B     00:00
+      Error: Failed to download metadata for repo 'appstream': Cannot prepare internal mirrorlist: No URLs in mirrorlist
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 306fcc032bfdf01362e3fa3d5a8fa292cfd1609b
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Tue Feb 1 01:23:47 2022 +0300
+
+    CI: Enable P_LKRG_JUMP_LABEL_STEXT_DEBUG in mainline test
+    
+    Link: https://github.com/lkrg-org/lkrg/issues/137
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit fb9e272f7d563fcd4b785dd744152c37b88e6298
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Mon Jan 31 02:38:58 2022 +0000
+
+    Add support for kernel 5.17+
+    
+    Since the kernel (5.17+), text_poke_loc structure was changed to relax
+    text_poke_bp() constraint:
+    
+    https://github.com/torvalds/linux/commit/26c44b776dba4ac692a0bf5a3836feb8a63fea6b
+    
+    LKRG is not awared about it and is confused which .text addresses are modified.
+    This commit addresses this issue and should fix #137
+
+commit 1f0bf0653462220639c591dd42f76a5700ec75f4
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Sun Jan 30 06:28:40 2022 +0300
+
+    Fix build on opensuse/leap
+    
+    SUSE version `#if`s added to a set in a similar way as RHEL.
+    
+    Fixes: #146
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 17752c8cef658dfa0190c53020819627b3a935fb
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jan 21 16:21:05 2022 +0100
+
+    Fix build on CentOS Stream 9
+    
+    Fixes #145
+
+commit b07e330cf345e57ae984850af1878c155f602ee1
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Tue Jan 18 07:53:48 2022 +0300
+
+    CI: Cross-platform Docker build
+    
+    Build only on APT based platforms.
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit e54ed31839e50363470a53124b667b31ed596248
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Mon Jan 17 08:14:55 2022 +0300
+
+    CI: Add Ubuntu 22.04 Jammy Jellyfish to boot test
+    
+    Future LTS release of Ubuntu with 5.13 Linux kernel[1].
+    In meantime, Groovy having totally broken mirrors[2].
+    
+    Link: https://discourse.ubuntu.com/t/jammy-jellyfish-release-schedule/23906
+    Link: https://bugs.launchpad.net/ubuntu/+bug/1956164
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 5bc538329466522a71791126877e4b77854692b0
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Sun Jan 16 09:37:39 2022 +0300
+
+    CI: Add more distributions to build test
+    
+    Plus, GA Workflow is renamed to be more understandable and shorter.
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 9075dade092fab61dfbe76caba5de5f856d5f085
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Sun Jan 16 09:28:52 2022 +0300
+
+    CI: Improve usability of mkosi.build
+    
+    Allow manual run of mkosi.build.
+    There is banner in bsd-games on OpenSUSE, but it outputs differently.
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 82ce3d382e7c912f333c99ff2f65de6004d922db
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Sun Jan 16 07:15:59 2022 +0300
+
+    CI: Replace linux-generic with linux-virtual to not pull linux-firmware
+    
+    mkosi uses linux-generic in the base packages causing install of
+    linux-firmware which is not needed for tests, takes time, and traffic
+    (200MB). Replace it with linux-virtual which is better suited for VMs.
+    
+    We still need linux-virtual early in BuildPackages= (in the first phase)
+    to build kernel module.
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 1b39b4cf9902cb239be08ce30b13c0e312770ed1
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Thu Jan 20 22:55:35 2022 +0000
+
+    Fix the build on kernels 5.16+
+    
+    Since kernel 5.16+ profile_task_exit, profile_munmap and task_free_notifier
+    are completely removed. This commit addresses this issue and fixes #144
 
 commit ea97fc940f5cfb965304e616343a4c8564c77ca8
 Author: Patrick Schleizer <adrelanos@whonix.org>
@@ -37,6 +330,37 @@ Author: Patrick Schleizer <adrelanos@whonix.org>
 Date:   Sat Jan 15 11:40:29 2022 -0500
 
     Merge tag 'v0.9.2'
+
+commit 8b6b53b133f4cad78e2450633d8a9665fb44bacb
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jan 14 11:47:42 2022 +0100
+
+    Fix build on latest CentOS Stream 8 and upcoming RHEL 8.6+
+    
+    Apparently, the rename of state to __state from Linux 5.14+ has just been
+    back-ported to CentOS Stream 8 starting with 4.18.0-349.el8 and will be in
+    RHEL 8.6+.
+    
+    Fixes #141
+
+commit 997171e7f73258518e983c0b8c678b9de15f0c5c
+Author: Vladimir D. Seleznev <vseleznv@altlinux.org>
+Date:   Thu Jan 13 15:16:15 2022 +0000
+
+    CI: Do not schedule Github actions in forks
+    
+    See #138
+
+commit 10ba314da91d3cbaa47ccdc87507811a5dac6fec
+Author: John Helmert III <ajak@gentoo.org>
+Date:   Fri Jan 7 01:46:35 2022 -0600
+
+    Add non-usr-merged systemd-coredump to UMH whitelist
+    
+    Some distributions haven't merged /usr yet, so add the alternative
+    path for systemd-coredump.
+    
+    Signed-off-by: John Helmert III <ajak@gentoo.org>
 
 commit 68a837da1e09d21218fbc3a9bd84e33a8a7b24b4
 Author: Solar Designer <solar@openwall.com>
