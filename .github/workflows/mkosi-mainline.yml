@@ -8,6 +8,7 @@ on:
 
 jobs:
     mkosi-mainline:
+        if: ${{ github.repository == 'lkrg-org/lkrg' || github.event_name != 'schedule' }}
         runs-on: ubuntu-20.04
         steps:
             - uses: actions/checkout@v2
@@ -18,13 +19,20 @@ jobs:
               # able to build images properly.
               run: |
                   sudo python3 -m pip install git+https://github.com/systemd/mkosi.git
+                  sudo sed -i 's/linux-generic/linux-virtual/' /usr/local/lib/python*/dist-packages/mkosi/__init__.py
+                  sudo rm -f /dev/kvm
                   echo /usr/local/bin >> $GITHUB_PATH
 
             - name: Download mainline kernel from Kernel PPA
               run: .github/workflows/ubuntu-kernel-daily.sh
 
+            - name: Enable LKRG debugging options
+              run: |
+                  sed -i '/P_LKRG_JUMP_LABEL_STEXT_DEBUG/s/\/\///' src/modules/print_log/p_lkrg_log_level_shared.h
+                  git diff
+
             - name: Create bootable image using mkosi
-              run: sudo mkosi -r ${{ env.series }} -p '!linux-virtual' --cache=mkosi.cache --prepare-script=.github/workflows/dpkg-i.sh
+              run: sudo mkosi -r ${{ env.series }} --cache=mkosi.cache --prepare-script=.github/workflows/dpkg-i.sh
 
             - name: Boot image on qemu
               run: |
@@ -35,6 +43,7 @@ jobs:
                   set timeout 300
                   expect "login: " {} default abort
                   set timeout 60
+                  expect "# " { send "/lkrg/.github/workflows/run-boot-tests.sh\r" } default abort
                   expect "# " { send "systemctl poweroff\r" } default abort
                   expect timeout abort eof { exit 0 }
                   EOF
@@ -46,6 +55,8 @@ jobs:
                   grep 'LKRG initialized successfully' boot.log
             - name: Check that boot.log does not contain problems
               run: "! egrep 'Kernel panic|BUG:|WARNING:|Oops|Call Trace' boot.log"
+            - name: Check that boot-tests script finished successfully
+              run: grep 'run-boot-tests.sh - SUCCESS' boot.log
             - name: Check that boot.log contains shutdown sequence
               run: |
                   grep 'Reached target.*Power.Off' boot.log
