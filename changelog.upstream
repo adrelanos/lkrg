@@ -1,3 +1,477 @@
+commit cd7c3117f62687050c5a849a5c3837dbf5e2e931
+Merge: 5e1fd9b ff18ec6
+Author: Patrick Schleizer <adrelanos@whonix.org>
+Date:   Mon Oct 3 07:43:22 2022 -0400
+
+    Merge tag 'v0.9.5'
+
+commit ff18ec6856851a9d83f12ee0034a6f57994bb1b6
+Author: Solar Designer <solar@openwall.com>
+Date:   Mon Aug 1 13:15:05 2022 +0200
+
+    LKRG 0.9.5
+
+commit 333ae0774e902cdc0141f12b7200b08cdd5a4928
+Author: Solar Designer <solar@openwall.com>
+Date:   Mon Aug 1 13:11:01 2022 +0200
+
+    Revert "Logging: Use KERN_EMERG in place of KERN_CRIT"
+    
+    This reverts commit dfb60a6eb2f91f279926fdb8c1f65acaa22d868b.
+
+commit c58cb52145b8e8ccc6bd19079f5c835933281cdc
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jul 29 17:52:02 2022 +0200
+
+    Simplify the new logic supporting OverlayFS
+
+commit 9dd2a8d3f7f6e6586ebc6f4b421c89440e713638
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jul 29 15:36:42 2022 +0200
+
+    CI: Enable CodeQL for all branches (not just main)
+
+commit 6f3627e32cf36dda8ff160c2fe31592f6537845d
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Wed Jul 27 04:56:26 2022 +0000
+
+    Rework the logic supporting OverlayFS/docker
+    
+    The original logic was hooking 'ovl_create_or_link' function but it could be
+    inlined. This commit changes it by hooking 'ovl_dentry_is_whiteout' when
+    possible.
+    
+    Fixes #215
+
+commit dfb60a6eb2f91f279926fdb8c1f65acaa22d868b
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 28 22:43:06 2022 +0200
+
+    Logging: Use KERN_EMERG in place of KERN_CRIT
+    
+    Fixes #222
+
+commit e773798649a728f32945ed2d27f9c6f77d4b9a72
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 28 22:39:56 2022 +0200
+
+    kINT: Support variable length jump labels also for 5.10.133+
+    
+    Extends b8ff7abcd0159b9bf9bcf84adfddbf6cec30d720
+    Extends fb9e272f7d563fcd4b785dd744152c37b88e6298
+    Fixes #221
+
+commit 09a156a53e7f85b0345d119e04149c495a166a3e
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Wed Jul 27 19:54:06 2022 +0300
+
+    CI: Remove EOL'ed Ubuntu releases
+    
+    Impish is started to fail, because it's EOL'ed at July 14, 2022.
+    Hirsute is EOL'ed at January 20, 2022, but it started to fail only
+    recently.
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit 7bb9cf154e9765e791a4fa3d11a50938c73ec22b
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jul 22 19:26:25 2022 +0200
+
+    LKRG 0.9.4
+
+commit d8b0e8387eafe74dd41168724641d655e45c9a4c
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jul 22 19:16:31 2022 +0200
+
+    README: Add DKMS uninstall instructions
+
+commit cfc320a16721a8c1f9bcb82c49962feedf514044
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jul 22 16:56:11 2022 +0200
+
+    LICENSE: Update copyright years
+
+commit ce3016b49ade540fb3271e2eb6a93dfb2f6767fa
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 21 18:02:09 2022 +0200
+
+    pCFI: Increase severity of "Frame pointer is not on the stack"
+
+commit f5286727b4193a4dba78557a8ee52f8d7cd69800
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 21 17:55:05 2022 +0200
+
+    pCFI: Avoid skipping of stack frame checks when CONFIG_UNWINDER_ORC
+    
+    Fixes #210
+
+commit a14d81e81ff14419e9175923af16906b8bd15d65
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 21 18:20:14 2022 +0200
+
+    Logging: Make logging of sysctl value changes more consistent
+    
+    Skip logging on no change and include old values for interval and
+    log_level, like we do for others.
+    
+    Fixes #211
+
+commit 93eda28b8bc2da9132ad5979cd68ee10f28353f1
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 21 18:06:05 2022 +0200
+
+    Logging: kINT: Don't skip any checks regardless of log level
+    
+    The checks we tried to skip updated "p_mod_bad_nr", which affected how we
+    treat further violations.
+    
+    Amends 8b7d68a4c70d0f7aed5218729d15168ceba3c73e
+    Fixes #212
+
+commit 05369422f107cd034e066f5f7fbdbf8216ae4fce
+Author: Solar Designer <solar@openwall.com>
+Date:   Mon Jul 18 21:17:13 2022 +0200
+
+    CHANGES: Update with major changes since 0.9.3
+
+commit 49a3117542cfbd841eb05383a4351d46488bb507
+Author: Solar Designer <solar@openwall.com>
+Date:   Mon Jul 18 20:54:33 2022 +0200
+
+    Rename the module from p_lkrg to lkrg
+
+commit e4c46d7d6b4d01b409c622582c749997e6853bcc
+Author: Solar Designer <solar@openwall.com>
+Date:   Mon Jul 18 20:43:05 2022 +0200
+
+    copy-builtin.sh: Simplify the Makefile parsing command
+
+commit cbd4198943291920277bfb28184ec6b17ba01162
+Author: yeggor <vasilenko.yegor@gmail.com>
+Date:   Tue Jul 19 18:27:01 2022 +0300
+
+    Enable code scanning with CodeQL
+
+commit f267c369e8edeff47e78c2dcf747584c886bf98e
+Author: RageLtMan <rageltman [at] sempervictus>
+Date:   Fri Jul 15 21:58:09 2022 -0400
+
+    Adapt copy-builtin.sh script for LKRG debug option
+    
+    Changes to the Makefile enabling debug builds of LKRG resulted in
+    the copy-builtin script producing an errant Makefile inside the
+    target kernel tree.
+    
+    Address this by creating a SECURITY_LKRG_DEBUG Kconfig option in
+    the Kconfig file and copy/update the relevant Makefile stanza into
+    the in-tree Makefile manually (vs extracting it from the source
+    Makefile and modifying in-flight).
+    
+    Testing:
+      Built in Arch chroot, verified prompt for new option and module
+    build in-tree.
+
+commit 237ece7ef3b0f25a55167aa95e0bded13993573a
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 14 05:05:47 2022 +0200
+
+    CI: Detect keywords ALERT, FAULT, FATAL in kernel messages
+
+commit 0f0f74fbcb2502a27951dad6a16c79306c7b1320
+Author: Solar Designer <solar@openwall.com>
+Date:   Sun Jul 17 17:22:06 2022 +0200
+
+    Logging: Wrap panic() in a macro, log an alert before panic
+
+commit 4e7dd0951f2bd5409bc9dbf9b3ac4786bf10098c
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 14 04:17:31 2022 +0200
+
+    Logging: Expose the STATE, DYING, FATAL categories
+
+commit 8b7d68a4c70d0f7aed5218729d15168ceba3c73e
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 14 02:56:01 2022 +0200
+
+    Logging: kINT: Change extra module messages from ALERT to WATCH
+    
+    It was inconsistent to produce "alerts" that did not invoke any response
+    action, whereas downgrading them to informational messages lets us skip
+    a lengthy block of checks at default log level.
+
+commit e3badfaf738727854b419fd1a768f93b637a07ba
+Author: Solar Designer <solar@openwall.com>
+Date:   Sat Jul 9 21:57:29 2022 +0200
+
+    Logging: Revise, unify, and reduce duplication of logging and responses
+    
+    Use macros, move logging and enforcement responses from callers into
+    called functions, remove where it was duplicate.
+    
+    Unify our log and kernel panic messages.
+
+commit f4dc1e31a9fda618fd99ecda99917b30c77483d2
+Author: Solar Designer <solar@openwall.com>
+Date:   Sat Jul 9 21:54:08 2022 +0200
+
+    Unify kernel symbol lookups through introduction of a macro
+
+commit 4b9a74ad51f250ee21ccbffe080d16734a4cb808
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Jul 12 16:52:36 2022 +0200
+
+    Logging: Revise messages from sysctl handlers
+
+commit 68f649bb0c65ccd694005107953e32d766b7dbf7
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jul 8 16:10:07 2022 +0200
+
+    Logging: Replace '\n' within log messages with ' ' (space character)
+    
+    sed -i 's/\\n/ /g' src/modules/database/p_database.c src/modules/integrity_timer/p_integrity_timer.c
+
+commit 33dfb1474f784453ba5daf3515e441ed36fecc9c
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jul 8 16:04:56 2022 +0200
+
+    Logging: Move trailing '\n' to inside of p_print_log()
+    
+    sed -i 's/\\n"/"/g' `fgrep -rl '\n"' src`
+    
+    Followed by manual re-alignment of trailing backslashes in a few places,
+    and indeed the edit of p_print_log().
+
+commit 7956c2883603b72b2db4fc5c4c8f4637886146dd
+Author: Solar Designer <solar@openwall.com>
+Date:   Fri Jul 8 15:49:07 2022 +0200
+
+    Drop trailing '\n' from panic() messages
+    
+    panic() removes and re-adds them anyway:
+    
+            if (len && buf[len - 1] == '\n')
+                    buf[len - 1] = '\0';
+    
+            pr_emerg("Kernel panic - not syncing: %s\n", buf);
+
+commit 08ff518bf9e5fad01ab44288cd5037e9c5fcf894
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 7 18:20:54 2022 +0200
+
+    Logging: Have P_TRY_OFFLOAD_NOTIFIER() construct messages
+
+commit db46f714ed71d643bc531b37498c93df29d45bbb
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 7 17:57:43 2022 +0200
+
+    Logging: Consistently use p_debug_log() for P_LOG_DEBUG messages
+
+commit 24f7029ac39fa7b6278f12b7093d1259dfbd8a11
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 7 13:53:02 2022 +0200
+
+    Logging: Rename log severity macros
+    
+    sed -i 's/P_LOG_LEVEL_MIN/P_LOG_MIN/g' `fgrep -rl P_LOG_LEVEL_MIN src`
+    sed -i 's/P_LOG_LEVEL_MAX/P_LOG_MAX/g' `fgrep -rl P_LOG_LEVEL_MAX src`
+    sed -i 's/P_LKRG_CRIT/P_LOG_ALERT/g' `fgrep -rl P_LKRG_CRIT src`
+    sed -i 's/P_LKRG_ALIVE/P_LOG_ALIVE/g' `fgrep -rl P_LKRG_ALIVE src`
+    sed -i 's/P_LKRG_ERR/P_LOG_FAULT/g' `fgrep -rl P_LKRG_ERR src`
+    sed -i 's/P_LKRG_WARN/P_LOG_ISSUE/g' `fgrep -rl P_LKRG_WARN src`
+    sed -i 's/P_LKRG_INFO/P_LOG_WATCH/g' `fgrep -rl P_LKRG_INFO src`
+    sed -i 's/P_LKRG_DBG/P_LOG_DEBUG/g' `fgrep -rl P_LKRG_DBG src`
+    sed -i 's/P_LKRG_STRONG_DBG/P_LOG_FLOOD/g' `fgrep -rl P_LKRG_STRONG_DBG src`
+    
+    Followed by manual re-alignment of trailing backslashes in a few places.
+
+commit 849e7e5dd9d446b39ae90f05b9e174f243482a17
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Jul 5 21:03:18 2022 +0200
+
+    Logging: Drop hard-coded "ERROR: " from more messages
+
+commit 9f9ae6ff52febd843f36dc448bb4ac4530f115d8
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Jul 5 20:55:56 2022 +0200
+
+    Logging: Drop hard-coded "ERROR: " from beginnings of messages
+    
+    sed -i 's/"ERROR: /"/' `fgrep -lr '"ERROR: ' src`
+
+commit 5ca9648009da68b8f895f4bab52809e30e3ade3f
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Jul 5 20:45:16 2022 +0200
+
+    Logging: Change LKRG message prefix, include severity in messages
+
+commit 57a61129a771c455e79489733b0b7d439fcc6db1
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Jul 5 20:36:52 2022 +0200
+
+    Logging: Simplify the API, change kernel message severities
+
+commit d6cd9fa74eb35101bbb43ee17c897f7ea75dfef3
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Jul 5 20:50:50 2022 +0200
+
+    Logging: Minor fixes to log level name reporting in p_sysctl_log_level()
+
+commit a3c32c2da59df6c51f7dc88cf5df5b13e08d6b2d
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 14 01:55:57 2022 +0200
+
+    kINT: Further simplify integrity violation counting
+
+commit 7b6dfbccfde90d52cc840f73903cf13e0aacbebe
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 14 01:44:59 2022 +0200
+
+    kINT: Fix and simplify integrity violation counting
+
+commit 873d32e5bc556b6f5a39836f193d7afbd4f4f7fd
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 14 01:27:17 2022 +0200
+
+    Fix comments on module_mutex for p_kmod_hash()
+
+commit 37e21ce0d4aec56bb197f12d9aa36b3e5fe04df1
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Jul 12 18:04:55 2022 +0200
+
+    pCFI: Fix the stack alignment check
+
+commit 2a029397798592bb8894a8832d4e8ae5fb0162f5
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue Jul 12 15:57:28 2022 +0200
+
+    Consistently use "static const char * const" for local string arrays
+
+commit 6e30ac23b9d1d70e966767bbbede70cba1eb6262
+Author: Solar Designer <solar@openwall.com>
+Date:   Thu Jul 7 18:48:01 2022 +0200
+
+    Fix build without P_LKRG_DEBUG
+
+commit a500f1d0d6a3ab46bd79923253a04d427577d639
+Author: Solar Designer <solar@openwall.com>
+Date:   Sat Jul 9 22:34:28 2022 +0200
+
+    README: Minor corrections of recent commits
+
+commit 9b103902d6630e36eb6611b8407ddf034e7c28dc
+Author: Krish-sysadmin <krishjain02939@gmail.com>
+Date:   Sat Jul 9 01:58:14 2022 +0200
+
+    README: Add instructions on installing using DKMS
+
+commit 1b80c7bbbfd2945df04e34f19d5dafb75c7e9f24
+Author: mrl5 <31549762+mrl5@users.noreply.github.com>
+Date:   Mon Jul 4 00:22:00 2022 +0200
+
+    feat(scripts): support OpenRC init system
+    
+    introduce OpenRC bootup scripts
+
+commit 91ccc5cf5050f2045482174aca845866abbb489e
+Author: Solar Designer <solar@openwall.com>
+Date:   Wed Jul 6 12:02:00 2022 +0200
+
+    UMH: Allow "/usr/sbin/modprobe"
+    
+    Fixes #198
+
+commit 30776f547e89c2069a52d5cdcd3b0ed013e23d30
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Sat Jul 2 05:08:51 2022 +0300
+
+    CI: Switch to ubuntu-22.04 for GA
+    
+    Switch to a new GA build environment, while it's still considered a Beta
+    it seems workable. Newer Docker, GCC (for cross compile), and QEMU.
+    
+    Link: https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2204-Readme.md
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit b64535bf4a46c8915fe922755f285499459d59c4
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Sat Jul 2 05:06:24 2022 +0300
+
+    CI: mkosi (mainline): Fix 'No space left on device' error
+    
+    'RootSize=3G' wasn't enough. Error message:
+    
+      Processing triggers for dracut (056-3) ...
+      dracut: Generating /boot/initrd.img-5.15.0-27-generic
+      dracut: Generating /boot/initrd.img-5.19.0-051900rc3daily20220623-generic
+      install: error writing '/boot/154d51139884488587155e452c2c8f23/5.15.0-27-generic/initrd': No space left on device
+      Could not copy '/boot/initrd.img-5.15.0-27-generic' to '/boot/154d51139884488587155e452c2c8f23/5.15.0-27-generic/initrd'.
+      install: error writing '/boot/154d51139884488587155e452c2c8f23/5.15.0-27-generic/linux': No space left on device
+      Could not copy '/boot/vmlinuz-5.15.0-27-generic' to '/boot/154d51139884488587155e452c2c8f23/5.15.0-27-generic/linux'.
+    
+    Fixes: https://github.com/lkrg-org/lkrg/issues/194
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit b8ff7abcd0159b9bf9bcf84adfddbf6cec30d720
+Author: Kenton Groombridge <concord@gentoo.org>
+Date:   Sun Jun 26 14:59:58 2022 -0400
+
+    Enable variable length jump label backport for 5.15.40+, cleanup
+    
+    Rework and extend the variable length JUMP_LABEL feature check to Linux
+    5.15.40+.
+    
+    Closes: #192
+
+commit cdef7d533afb70aee145471839f78668d44a4318
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sun Jun 19 23:02:22 2022 +0000
+
+    Remove unnecessary 'p_db_lock' dependency in (un)hiding
+    
+    Li Cheng reported that (un)hiding option may indirectly invoke
+    schedule() after taking a spinlock (which is wrong).
+    LKRG do not need to take the 'p_db_lock' in that specific time
+    because LKRG is already synchronizing with integrity verification
+    module via 'module_mutex'. This commit addresses this problem
+    and should fix issue #191.
+    This commit fixes also a potential issue with P_UNHIDE_FROM_KOBJ
+    macro which may immediately return from the unhiding function
+    without unlocking the synchronizers when OOM happens.
+
+commit 44e5e252e0ff41cf190e7750b47b076dce28f19a
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Sat Jun 11 20:28:05 2022 +0000
+
+    Fix potential overflow when CONFIG_UNWINDER_ORC is enabled
+    
+    It is very unlikely to happen but when kernel is compiled with
+    CONFIG_UNWINDER_ORC and stack depth is deeper than P_PCFI_STACK_BUF
+    (more than 256 frames) OOB access was possible.
+    Support for CONFIG_UNWINDER_ORC was added in the following commit:
+    2daf922b6f5b048f3b33c3731c1ad36c4ed40c1e
+
+commit bc0037c9f71c52713e36ed6a9c3c9ac3a05f05d9
+Author: Adam_pi3 <pi3@pi3.com.pl>
+Date:   Fri Jun 10 21:02:56 2022 +0000
+
+    Reduce memory overhead generated by kmem_cache_create
+    
+    This commit brings a few important changes:
+     - LKRG has used to leverage SLAB_HWCACHE_ALIGN but memory overhead
+       may be too significant for LKRG's use cases
+     - Since the kernel 4.5+ we can use SLAB_ACCOUNT to make sure that
+       LKRG's caches are standalone
+     - Modify the size of pCFI stack buffer cache to be smaller and
+       decoupled from the PAGE_SIZE (there is no reason for that)
+    
+    Additionally, this commit should help addressing #131
+
+commit 5e1fd9be3f0653cacf4a6202e4f5a53d71469db0
+Author: Patrick Schleizer <adrelanos@whonix.org>
+Date:   Wed May 25 09:12:54 2022 -0400
+
+    bumped changelog version
+
 commit d5531c50bef38fe04b76e43f9e4bb21e213e8ae8
 Merge: 15b9ebf c578e9f
 Author: Patrick Schleizer <adrelanos@whonix.org>
@@ -22,6 +496,53 @@ Author: Patrick Schleizer <adrelanos@whonix.org>
 Date:   Fri May 20 14:46:36 2022 -0400
 
     copyright
+
+commit 999ef556aad1c0412c51cac99c74464e14ca91a0
+Author: Solar Designer <solar@openwall.com>
+Date:   Tue May 10 14:10:03 2022 +0200
+
+    Drop a debugging p_print_log() that had out-of-bounds access
+    
+    Fixes #185
+
+commit 7e0dcd46ff1dd54b75f120e8c83213e388f7fafa
+Author: Solar Designer <solar@openwall.com>
+Date:   Sat May 7 22:58:27 2022 +0200
+
+    Temporarily disable the recent i386 and arm64v8 (aarch64) tests
+
+commit c9af2ccfafddd4eca23c50d8d6bf7865d11b3bd8
+Author: lc85446 <lc85446@alibaba-inc.com>
+Date:   Thu Apr 28 11:57:34 2022 +0800
+
+    p_ed_enforce_pcfi: validate the p_task stack but not irq_stack
+    
+    In the irq context, we should not get the p_task stack from p_regs.
+
+commit 20c6c461273f8de15369d9cb2455e90bd6260cf3
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Tue Apr 26 04:24:53 2022 +0300
+
+    CI: Boot test on the other supported architectures
+    
+    Use Docker to create multi-arch Ubuntu images (which uses
+    qemu-user-static) and then boot and test them in qemu-system.
+    
+    Currently i386, arm64v8 (aarch64), and arm32v7 (armhf) are supported.
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
+
+commit bea0a4dd6a7e05f08090ee0791cf56fc1b630537
+Author: Vitaly Chikunov <vt@altlinux.org>
+Date:   Sun May 1 11:25:59 2022 +0300
+
+    CI: Replace egrep with grep -E
+    
+    "The egrep and fgrep commands, which have been deprecated since
+     release 2.5.3 (2007), now warn that they are obsolescent and should
+     be replaced by grep -E and grep -F."
+    
+    Signed-off-by: Vitaly Chikunov <vt@altlinux.org>
 
 commit c578e9f786299b67ffd62057b4534b0bf4fb7ece
 Author: Solar Designer <solar@openwall.com>
