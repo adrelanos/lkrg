@@ -65,6 +65,7 @@
 #include <linux/vmalloc.h>
 #include <linux/ftrace.h>
 
+#include <linux/preempt.h>
 #ifndef RHEL_RELEASE_VERSION
 #define RHEL_RELEASE_VERSION(a, b) (((a) << 8) + (b))
 #endif
@@ -101,6 +102,20 @@
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
 #include <linux/sched/task_stack.h>
 #endif
+
+/*
+ * Define kmem_cache_create() flags:
+ *  - LKRG has used to leverage SLAB_HWCACHE_ALIGN but memory overhead
+ *    may be too significant for LKRG's use cases
+ *  - Since the kernel 4.5+ we can use SLAB_ACCOUNT to make sure
+ *    that LKRG's caches are standalone
+ */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,5,0)
+ #define P_LKRG_CACHE_FLAGS 0
+#else
+ #define P_LKRG_CACHE_FLAGS SLAB_ACCOUNT
+#endif
+
 
 /*
  * Some custom compilation of the kernel might aggresively inline
@@ -176,13 +191,13 @@ typedef struct _p_lkrg_global_symbols_structure {
 #endif
 
 #if defined(P_KERNEL_AGGRESSIVE_INLINING)
-   int (*p_kernel_set_memory_ro)(unsigned long addr, int numpages);
-   int (*p_kernel_set_memory_rw)(unsigned long addr, int numpages);
+   int (*p_set_memory_ro)(unsigned long addr, int numpages);
+   int (*p_set_memory_rw)(unsigned long addr, int numpages);
  #if defined(CONFIG_X86)
    ;
-//   int (*p_kernel_set_memory_np)(unsigned long addr, int numpages);
+//   int (*p_set_memory_np)(unsigned long addr, int numpages);
  #elif defined(CONFIG_ARM64)
-   int (*p_kernel_set_memory_valid)(unsigned long addr, int numpages, int enable);
+   int (*p_set_memory_valid)(unsigned long addr, int numpages, int enable);
  #endif
 #else
  #if defined(CONFIG_X86)
@@ -195,7 +210,7 @@ typedef struct _p_lkrg_global_symbols_structure {
                                  pgprot_t set_mask, pgprot_t clear_mask);
  #endif
 #endif
-   int (*p_is_kernel_text_address)(unsigned long p_addr);
+   int (*p___kernel_text_address)(unsigned long p_addr);
 #if defined(CONFIG_SECCOMP)
    void (*p_get_seccomp_filter)(struct task_struct *p_task);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,9,0)
@@ -226,10 +241,10 @@ typedef struct _p_lkrg_global_symbols_structure {
    struct list_head *p_ddebug_tables;
    struct mutex *p_ddebug_lock;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
-   int (*p_ddebug_remove_module_ptr)(const char *p_name);
+   int (*p_ddebug_remove_module)(const char *p_name);
 #endif
 #endif
-   struct list_head *p_global_modules;
+   struct list_head *p_modules;
    struct kset **p_module_kset;
 #if defined(CONFIG_X86)
  #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0)
@@ -237,8 +252,8 @@ typedef struct _p_lkrg_global_symbols_structure {
  #endif
 #endif
 #ifdef P_LKRG_UNEXPORTED_MODULE_ADDRESS
-   struct module* (*p_module_address)(unsigned long p_val);
-   struct module* (*p_module_text_address)(unsigned long p_val);
+   struct module* (*p___module_address)(unsigned long p_val);
+   struct module* (*p___module_text_address)(unsigned long p_val);
 #endif
    struct module* (*p_find_module)(const char *name);
    struct mutex *p_module_mutex;
@@ -258,8 +273,8 @@ typedef struct _p_lkrg_global_symbols_structure {
 } p_lkrg_global_syms;
 
 #ifdef P_LKRG_UNEXPORTED_MODULE_ADDRESS
-#define LKRG_P_MODULE_ADDRESS(p_addr)      P_SYM(p_module_address)(p_addr)
-#define LKRG_P_MODULE_TEXT_ADDRESS(p_addr) P_SYM(p_module_text_address)(p_addr)
+#define LKRG_P_MODULE_ADDRESS(p_addr)      P_SYM(p___module_address)(p_addr)
+#define LKRG_P_MODULE_TEXT_ADDRESS(p_addr) P_SYM(p___module_text_address)(p_addr)
 #else
 #define LKRG_P_MODULE_ADDRESS(p_addr)      __module_address(p_addr)
 #define LKRG_P_MODULE_TEXT_ADDRESS(p_addr) __module_text_address(p_addr)
@@ -301,6 +316,12 @@ extern p_ro_page p_ro;
 #define P_SYM(p_field) p_ro.p_lkrg_global_ctrl.syms.p_field
 #define P_CTRL(p_field) p_ro.p_lkrg_global_ctrl.ctrl.p_field
 #define P_CTRL_ADDR &p_ro.p_lkrg_global_ctrl
+
+#define P_SYM_INIT(sym, type) \
+   if (!(P_SYM(p_ ## sym) = (type)P_SYM(p_kallsyms_lookup_name)(#sym))) { \
+      p_print_log(P_LOG_FATAL, "Can't find '" #sym "'"); \
+      goto p_sym_error; \
+   }
 
 /*
  * LKRG counter lock
@@ -368,7 +389,7 @@ static inline int p_lkrg_counter_lock_val_read(p_lkrg_counter_lock *p_arg) {
 /* End */
 
 /*
- * p_lkrg modules
+ * LKRG modules
  */
 #include "modules/print_log/p_lkrg_print_log.h"               // printing, error and debug module
 #include "modules/hashing/p_lkrg_fast_hash.h"                 // Hashing module

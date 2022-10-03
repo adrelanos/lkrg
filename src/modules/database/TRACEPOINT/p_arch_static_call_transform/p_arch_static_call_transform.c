@@ -50,7 +50,7 @@ notrace int p_arch_static_call_transform_entry(struct kretprobe_instance *p_ri, 
    unsigned long p_flags;
 
    p_debug_kprobe_log(
-          "p_arch_static_call_transform_entry: comm[%s] Pid:%d\n",current->comm,current->pid);
+          "p_arch_static_call_transform_entry: comm[%s] Pid:%d",current->comm,current->pid);
 
    do {
       p_lkrg_counter_lock_lock(&p_static_call_spinlock, &p_flags);
@@ -68,8 +68,8 @@ notrace int p_arch_static_call_transform_entry(struct kretprobe_instance *p_ri, 
 
    if (p_tramp) {
 
-      p_print_log(P_LKRG_INFO,
-                  "[TRACEPOINT] New modification: code[0x%lx]!\n",
+      p_print_log(P_LOG_WATCH,
+                  "[TRACEPOINT] New modification: code[0x%lx]!",
                   (unsigned long)p_tramp);
 
       if (P_SYM(p_core_kernel_text)(p_tramp)) {
@@ -95,15 +95,15 @@ notrace int p_arch_static_call_transform_entry(struct kretprobe_instance *p_ri, 
          /*
           * We shouldn't be here...
           */
-         p_print_log(P_LKRG_ERR,
-                     "[TRACEPOINT] Not a .text section! [0x%lx]\n",p_tramp);
+         p_print_log(P_LOG_FAULT,
+                     "[TRACEPOINT] Not a .text section! [0x%lx]",p_tramp);
       }
    }
 
    if (IS_ENABLED(CONFIG_HAVE_STATIC_CALL_INLINE) && p_site) {
 
-      p_print_log(P_LKRG_INFO,
-                  "[TRACEPOINT] New modification: code[0x%lx]!\n",
+      p_print_log(P_LOG_WATCH,
+                  "[TRACEPOINT] New modification: code[0x%lx]!",
                   (unsigned long)p_site);
 
       if (P_SYM(p_core_kernel_text)(p_site)) {
@@ -129,8 +129,8 @@ notrace int p_arch_static_call_transform_entry(struct kretprobe_instance *p_ri, 
          /*
           * We shouldn't be here...
           */
-         p_print_log(P_LKRG_ERR,
-                     "[TRACEPOINT] Not a .text section! [0x%lx]\n",p_site);
+         p_print_log(P_LOG_FAULT,
+                     "[TRACEPOINT] Not a .text section! [0x%lx]",p_site);
       }
    }
 
@@ -156,15 +156,15 @@ notrace int p_arch_static_call_transform_ret(struct kretprobe_instance *ri, stru
       p_db.kernel_stext_copy[p_db.kernel_stext.p_size] = 0;
 #endif
 
-      p_print_log(P_LKRG_INFO,
-             "[TRACEPOINT] Updating kernel core .text section hash!\n");
+      p_print_log(P_LOG_WATCH,
+             "[TRACEPOINT] Updating kernel core .text section hash!");
 
    }
 
    if (p_module1) {
 
-      p_print_log(P_LKRG_INFO,
-                  "[TRACEPOINT] Updating module's core .text section hash module[%s : 0x%lx]!\n",
+      p_print_log(P_LOG_WATCH,
+                  "[TRACEPOINT] Updating module's core .text section hash module[%s : 0x%lx]!",
                   p_db.p_module_list_array[p_module1_idx].p_name,
                   (unsigned long)p_db.p_module_list_array[p_module1_idx].p_mod);
 
@@ -193,10 +193,10 @@ notrace int p_arch_static_call_transform_ret(struct kretprobe_instance *ri, stru
       }
 
       if (!p_flag) {
-         p_print_log(P_LKRG_ERR,
-                     "[TRACEPOINT] Updated module's list hash for module[%s] but can't find the same module in KOBJs list!\n",
+         p_print_log(P_LOG_FAULT,
+                     "[TRACEPOINT] Updated module's list hash for module[%s] but can't find the same module in KOBJs list!",
                      p_db.p_module_list_array[p_module1_idx].p_name);
-         p_print_log(P_LKRG_INFO,"module[%s : 0x%lx]!\n",
+         p_print_log(P_LOG_WATCH,"module[%s : 0x%lx]!",
                      p_db.p_module_list_array[p_module1_idx].p_name,
                      (unsigned long)p_db.p_module_list_array[p_module1_idx].p_mod);
       } else {
@@ -211,8 +211,8 @@ notrace int p_arch_static_call_transform_ret(struct kretprobe_instance *ri, stru
 
    if (p_module2) {
 
-      p_print_log(P_LKRG_INFO,
-                  "[TRACEPOINT] Updating module's core .text section hash module[%s : 0x%lx]!\n",
+      p_print_log(P_LOG_WATCH,
+                  "[TRACEPOINT] Updating module's core .text section hash module[%s : 0x%lx]!",
                   p_db.p_module_list_array[p_module2_idx].p_name,
                   (unsigned long)p_db.p_module_list_array[p_module2_idx].p_mod);
 
@@ -241,10 +241,10 @@ notrace int p_arch_static_call_transform_ret(struct kretprobe_instance *ri, stru
       }
 
       if (!p_flag) {
-         p_print_log(P_LKRG_ERR,
-                     "[TRACEPOINT] Updated module's list hash for module[%s] but can't find the same module in KOBJs list!\n",
+         p_print_log(P_LOG_FAULT,
+                     "[TRACEPOINT] Updated module's list hash for module[%s] but can't find the same module in KOBJs list!",
                      p_db.p_module_list_array[p_module2_idx].p_name);
-         p_print_log(P_LKRG_INFO,"module[%s : 0x%lx]!\n",
+         p_print_log(P_LOG_WATCH,"module[%s : 0x%lx]!",
                      p_db.p_module_list_array[p_module2_idx].p_name,
                      (unsigned long)p_db.p_module_list_array[p_module2_idx].p_mod);
       } else {
@@ -271,12 +271,12 @@ int p_install_arch_static_call_transform_hook(void) {
    p_lkrg_counter_lock_init(&p_static_call_spinlock);
 
    if ( (p_tmp = register_kretprobe(&p_arch_static_call_transform_kretprobe)) != 0) {
-      p_print_log(P_LKRG_ERR, "[kretprobe] register_kretprobe() for <%s> failed! [err=%d]\n",
+      p_print_log(P_LOG_FATAL, "[kretprobe] register_kretprobe() for <%s> failed! [err=%d]",
                   p_arch_static_call_transform_kretprobe.kp.symbol_name,
                   p_tmp);
       return P_LKRG_GENERAL_ERROR;
    }
-   p_print_log(P_LKRG_INFO, "Planted [kretprobe] <%s> at: 0x%lx\n",
+   p_print_log(P_LOG_WATCH, "Planted [kretprobe] <%s> at: 0x%lx",
                p_arch_static_call_transform_kretprobe.kp.symbol_name,
                (unsigned long)p_arch_static_call_transform_kretprobe.kp.addr);
    p_arch_static_call_transform_kretprobe_state = 1;
@@ -288,12 +288,12 @@ int p_install_arch_static_call_transform_hook(void) {
 void p_uninstall_arch_static_call_transform_hook(void) {
 
    if (!p_arch_static_call_transform_kretprobe_state) {
-      p_print_log(P_LKRG_INFO, "[kretprobe] <%s> at 0x%lx is NOT installed\n",
+      p_print_log(P_LOG_WATCH, "[kretprobe] <%s> at 0x%lx is NOT installed",
                   p_arch_static_call_transform_kretprobe.kp.symbol_name,
                   (unsigned long)p_arch_static_call_transform_kretprobe.kp.addr);
    } else {
       unregister_kretprobe(&p_arch_static_call_transform_kretprobe);
-      p_print_log(P_LKRG_INFO, "Removing [kretprobe] <%s> at 0x%lx nmissed[%d]\n",
+      p_print_log(P_LOG_WATCH, "Removing [kretprobe] <%s> at 0x%lx nmissed[%d]",
                   p_arch_static_call_transform_kretprobe.kp.symbol_name,
                   (unsigned long)p_arch_static_call_transform_kretprobe.kp.addr,
                   p_arch_static_call_transform_kretprobe.nmissed);

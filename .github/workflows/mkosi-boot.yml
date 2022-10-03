@@ -4,14 +4,13 @@ on: [push, pull_request]
 
 jobs:
     mkosi-boot:
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
         strategy:
             fail-fast: false
             matrix:
                 release:
                     - bionic
                     - focal
-                    - hirsute
                     - jammy
         steps:
             - uses: actions/checkout@v2
@@ -49,7 +48,7 @@ jobs:
                   grep 'Linux version' boot.log
                   grep 'LKRG initialized successfully' boot.log
             - name: Check that boot.log does not contain problems
-              run: "! egrep 'Kernel panic|BUG:|WARNING:|Oops|Call Trace' boot.log"
+              run: "! grep -E 'Kernel panic|BUG:|WARNING:|ALERT:|FAULT:|FATAL:|Oops|Call Trace' boot.log"
             - name: Check that boot-tests script finished successfully
               run: grep 'run-boot-tests.sh - SUCCESS' boot.log
             - name: Check that boot.log contains shutdown sequence

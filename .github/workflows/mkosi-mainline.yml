@@ -9,7 +9,7 @@ on:
 jobs:
     mkosi-mainline:
         if: ${{ github.repository == 'lkrg-org/lkrg' || github.event_name != 'schedule' }}
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
         steps:
             - uses: actions/checkout@v2
             - run: sudo apt-get update
@@ -28,7 +28,7 @@ jobs:
 
             - name: Enable LKRG debugging options
               run: |
-                  sed -i '/P_LKRG_JUMP_LABEL_STEXT_DEBUG/s/\/\///' src/modules/print_log/p_lkrg_log_level_shared.h
+                  sed -i '/P_LKRG_JUMP_LABEL_STEXT_DEBUG/s/\/\///' src/modules/print_log/p_lkrg_print_log.h
                   git diff
 
             - name: Create bootable image using mkosi
@@ -54,7 +54,7 @@ jobs:
                   grep 'Linux version' boot.log
                   grep 'LKRG initialized successfully' boot.log
             - name: Check that boot.log does not contain problems
-              run: "! egrep 'Kernel panic|BUG:|WARNING:|Oops|Call Trace' boot.log"
+              run: "! grep -E 'Kernel panic|BUG:|WARNING:|ALERT:|FAULT:|FATAL:|Oops|Call Trace' boot.log"
             - name: Check that boot-tests script finished successfully
               run: grep 'run-boot-tests.sh - SUCCESS' boot.log
             - name: Check that boot.log contains shutdown sequence

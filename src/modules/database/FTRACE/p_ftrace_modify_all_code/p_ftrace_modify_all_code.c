@@ -102,8 +102,8 @@ notrace int p_ftrace_modify_all_code_entry(struct kretprobe_instance *p_ri, stru
           * FTRACE might generate dynamic trampoline which is not part of .text section.
           * This is not abnormal situation anymore.
           */
-         p_print_log(P_LKRG_INFO,
-                     "[FTRACE] Not a .text section! [0x%lx]\n",p_rec->ip);
+         p_print_log(P_LOG_WATCH,
+                     "[FTRACE] Not a .text section! [0x%lx]",p_rec->ip);
       }
    }
 
@@ -135,8 +135,8 @@ notrace int p_ftrace_modify_all_code_ret(struct kretprobe_instance *ri, struct p
       p_db.kernel_stext_copy[p_db.kernel_stext.p_size] = 0;
 #endif
 
-      p_print_log(P_LKRG_INFO,
-             "[FTRACE] Updating kernel core .text section hash!\n");
+      p_print_log(P_LOG_WATCH,
+             "[FTRACE] Updating kernel core .text section hash!");
 
    }
 
@@ -151,8 +151,8 @@ notrace int p_ftrace_modify_all_code_ret(struct kretprobe_instance *ri, struct p
              */
             p_module = p_db.p_module_list_array[p_tmp].p_mod;
 
-            p_print_log(P_LKRG_INFO,
-                        "[FTRACE] Updating module's core .text section hash module[%s : 0x%lx]!\n",
+            p_print_log(P_LOG_WATCH,
+                        "[FTRACE] Updating module's core .text section hash module[%s : 0x%lx]!",
                         p_db.p_module_list_array[p_tmp].p_name,
                         (unsigned long)p_db.p_module_list_array[p_tmp].p_mod);
 
@@ -180,10 +180,10 @@ notrace int p_ftrace_modify_all_code_ret(struct kretprobe_instance *ri, struct p
             }
 
             if (!p_flag) {
-               p_print_log(P_LKRG_ERR,
-                           "[FTRACE] Updated module's list hash for module[%s] but can't find the same module in KOBJs list!\n",
+               p_print_log(P_LOG_FAULT,
+                           "[FTRACE] Updated module's list hash for module[%s] but can't find the same module in KOBJs list!",
                            p_db.p_module_list_array[p_tmp].p_name);
-               p_print_log(P_LKRG_INFO,"module[%s : 0x%lx]!\n",
+               p_print_log(P_LOG_WATCH,"module[%s : 0x%lx]!",
                            p_db.p_module_list_array[p_tmp].p_name,
                            (unsigned long)p_db.p_module_list_array[p_tmp].p_mod);
             } else {
@@ -209,65 +209,38 @@ int p_install_ftrace_modify_all_code_hook(void) {
 
    int p_tmp;
 
-   P_SYM(p_ftrace_lock) = (struct mutex *)P_SYM(p_kallsyms_lookup_name)("ftrace_lock");
-
-   if (!P_SYM(p_ftrace_lock)) {
-      p_print_log(P_LKRG_ERR,
-             "[FTRACE] ERROR: Can't find 'ftrace_lock' function :( Exiting...\n");
-      return P_LKRG_GENERAL_ERROR;
-   }
-
-   P_SYM(p_ftrace_rec_iter_start) = (struct ftrace_rec_iter *(*)(void))
-                                    P_SYM(p_kallsyms_lookup_name)("ftrace_rec_iter_start");
-
-   if (!P_SYM(p_ftrace_rec_iter_start)) {
-      p_print_log(P_LKRG_ERR,
-             "[FTRACE] ERROR: Can't find 'ftrace_rec_iter_start' function :( Exiting...\n");
-      return P_LKRG_GENERAL_ERROR;
-   }
-
-   P_SYM(p_ftrace_rec_iter_next) = (struct ftrace_rec_iter *(*)(struct ftrace_rec_iter *))
-                                   P_SYM(p_kallsyms_lookup_name)("ftrace_rec_iter_next");
-
-   if (!P_SYM(p_ftrace_rec_iter_next)) {
-      p_print_log(P_LKRG_ERR,
-             "[FTRACE] ERROR: Can't find 'ftrace_rec_iter_next' function :( Exiting...\n");
-      return P_LKRG_GENERAL_ERROR;
-   }
-
-   P_SYM(p_ftrace_rec_iter_record) = (struct dyn_ftrace *(*)(struct ftrace_rec_iter *))
-                                     P_SYM(p_kallsyms_lookup_name)("ftrace_rec_iter_record");
-
-   if (!P_SYM(p_ftrace_rec_iter_record)) {
-      p_print_log(P_LKRG_ERR,
-             "[FTRACE] ERROR: Can't find 'ftrace_rec_iter_record' function :( Exiting...\n");
-      return P_LKRG_GENERAL_ERROR;
-   }
+   P_SYM_INIT(ftrace_lock, struct mutex *)
+   P_SYM_INIT(ftrace_rec_iter_start, struct ftrace_rec_iter *(*)(void))
+   P_SYM_INIT(ftrace_rec_iter_next, struct ftrace_rec_iter *(*)(struct ftrace_rec_iter *))
+   P_SYM_INIT(ftrace_rec_iter_record, struct dyn_ftrace *(*)(struct ftrace_rec_iter *))
 
    if ( (p_tmp = register_kretprobe(&p_ftrace_modify_all_code_kretprobe)) != 0) {
-      p_print_log(P_LKRG_ERR, "[kretprobe] register_kretprobe() for <%s> failed! [err=%d]\n",
+      p_print_log(P_LOG_FATAL, "[kretprobe] register_kretprobe() for <%s> failed! [err=%d]",
                   p_ftrace_modify_all_code_kretprobe.kp.symbol_name,
                   p_tmp);
       return P_LKRG_GENERAL_ERROR;
    }
-   p_print_log(P_LKRG_INFO, "Planted [kretprobe] <%s> at: 0x%lx\n",
+   p_print_log(P_LOG_WATCH, "Planted [kretprobe] <%s> at: 0x%lx",
                p_ftrace_modify_all_code_kretprobe.kp.symbol_name,
                (unsigned long)p_ftrace_modify_all_code_kretprobe.kp.addr);
    p_ftrace_modify_all_code_kretprobe_state = 1;
 
    return P_LKRG_SUCCESS;
+
+p_sym_error:
+   return P_LKRG_GENERAL_ERROR;
 }
 
 
 void p_uninstall_ftrace_modify_all_code_hook(void) {
 
    if (!p_ftrace_modify_all_code_kretprobe_state) {
-      p_print_log(P_LKRG_INFO, "[kretprobe] <%s> at 0x%lx is NOT installed\n",
+      p_print_log(P_LOG_WATCH, "[kretprobe] <%s> at 0x%lx is NOT installed",
                   p_ftrace_modify_all_code_kretprobe.kp.symbol_name,
                   (unsigned long)p_ftrace_modify_all_code_kretprobe.kp.addr);
    } else {
       unregister_kretprobe(&p_ftrace_modify_all_code_kretprobe);
-      p_print_log(P_LKRG_INFO, "Removing [kretprobe] <%s> at 0x%lx nmissed[%d]\n",
+      p_print_log(P_LOG_WATCH, "Removing [kretprobe] <%s> at 0x%lx nmissed[%d]",
                   p_ftrace_modify_all_code_kretprobe.kp.symbol_name,
                   (unsigned long)p_ftrace_modify_all_code_kretprobe.kp.addr,
                   p_ftrace_modify_all_code_kretprobe.nmissed);

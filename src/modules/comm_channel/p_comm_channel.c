@@ -35,8 +35,9 @@ static int p_pint_enforce_max = 2;
 static int p_interval_min = 5;
 static int p_interval_max = 1800;
 
-static int p_log_level_min = P_LOG_LEVEL_NONE;
-static int p_log_level_max = P_LOG_LEVEL_MAX - 1;
+static int p_log_level_min = P_LOG_MIN;
+static int p_log_level_max = P_LOG_MAX;
+static unsigned int p_log_level_new;
 
 static int p_block_module_min = 0;
 static int p_block_module_max = 1;
@@ -203,7 +204,7 @@ struct ctl_table p_lkrg_sysctl_table[] = {
    },
    {
       .procname       = "log_level",
-      .data           = &P_CTRL(p_log_level),
+      .data           = &p_log_level_new,
       .maxlen         = sizeof(unsigned int),
       .mode           = 0600,
       .proc_handler   = p_sysctl_log_level,
@@ -349,7 +350,7 @@ static int p_sysctl_kint_validate(struct ctl_table *p_table, int p_write,
 
    int p_ret;
    unsigned int p_tmp;
-   char *p_str[] = {
+   static const char * const p_str[] = {
       "DISABLED",
       "MANUAL",
       "PERIODICALLY",
@@ -360,14 +361,10 @@ static int p_sysctl_kint_validate(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_kint_validate) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"kint_validate\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_kint_validate),
-                     p_str[P_CTRL(p_kint_validate)]
-                     );
          P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Changing 'kint_validate' from %d (%s) to %d (%s)",
+                     p_tmp, p_str[p_tmp],
+                     P_CTRL(p_kint_validate), p_str[P_CTRL(p_kint_validate)]);
          /* Random events */
          if (p_tmp < 3 && P_CTRL(p_kint_validate) == 3) {
             p_register_notifiers();
@@ -386,7 +383,7 @@ static int p_sysctl_kint_enforce(struct ctl_table *p_table, int p_write,
 
    int p_ret;
    unsigned int p_tmp;
-   char *p_str[] = {
+   static const char * const p_str[] = {
       "LOG & ACCEPT",
 #if defined(CONFIG_X86)
       "LOG ONLY (For SELinux and CR0.WP LOG & RESTORE)",
@@ -400,14 +397,10 @@ static int p_sysctl_kint_enforce(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_kint_enforce) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"kint_enforce\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_kint_enforce),
-                     p_str[P_CTRL(p_kint_enforce)]
-                     );
          P_CTRL(p_profile_enforce) = 9;
+         p_print_log(P_LOG_STATE, "Changing 'kint_enforce' from %d (%s) to %d (%s)",
+                     p_tmp, p_str[p_tmp],
+                     P_CTRL(p_kint_enforce), p_str[P_CTRL(p_kint_enforce)]);
 #if defined(CONFIG_X86)
          if (P_CTRL(p_kint_enforce)) {
             P_ENABLE_WP_FLAG(p_pcfi_CPU_flags);
@@ -425,7 +418,7 @@ static int p_sysctl_pint_validate(struct ctl_table *p_table, int p_write,
 
    int p_ret;
    unsigned int p_tmp;
-   char *p_str[] = {
+   static const char * const p_str[] = {
       "DISABLED",
       "CURRENT",
       "CURRENT",
@@ -436,14 +429,10 @@ static int p_sysctl_pint_validate(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_pint_validate) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"pint_validate\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_pint_validate),
-                     p_str[P_CTRL(p_pint_validate)]
-                     );
          P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Changing 'pint_validate' from %d (%s) to %d (%s)",
+                     p_tmp, p_str[p_tmp],
+                     P_CTRL(p_pint_validate), p_str[P_CTRL(p_pint_validate)]);
       }
    }
    p_lkrg_close_rw();
@@ -456,7 +445,7 @@ static int p_sysctl_pint_enforce(struct ctl_table *p_table, int p_write,
 
    int p_ret;
    unsigned int p_tmp;
-   char *p_str[] = {
+   static const char * const p_str[] = {
       "LOG & ACCEPT",
       "KILL TASK",
       "PANIC"
@@ -466,14 +455,10 @@ static int p_sysctl_pint_enforce(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_pint_enforce) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"pint_enforce\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_pint_enforce),
-                     p_str[P_CTRL(p_pint_enforce)]
-                     );
          P_CTRL(p_profile_enforce) = 9;
+         p_print_log(P_LOG_STATE, "Changing 'pint_enforce' from %d (%s) to %d (%s)",
+                     p_tmp, p_str[p_tmp],
+                     P_CTRL(p_pint_enforce), p_str[P_CTRL(p_pint_enforce)]);
       }
    }
    p_lkrg_close_rw();
@@ -485,11 +470,15 @@ static int p_sysctl_pint_enforce(struct ctl_table *p_table, int p_write,
 static int p_sysctl_interval(struct ctl_table *p_table, int p_write,
                               void __user *p_buffer, size_t *p_len, loff_t *p_pos) {
    int p_ret;
+   unsigned int p_tmp;
 
+   p_tmp = P_CTRL(p_interval);
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
-      p_print_log(P_LKRG_CRIT, "[kINT] New interval => %d\n", P_CTRL(p_interval));
-      p_offload_work(0); // run integrity check!
+      if (P_CTRL(p_interval) != p_tmp) {
+         p_print_log(P_LOG_STATE, "Changing 'interval' from %d to %d", p_tmp, P_CTRL(p_interval));
+         p_offload_work(0); // run integrity check!
+      }
    }
    p_lkrg_close_rw();
 
@@ -506,11 +495,9 @@ static int p_sysctl_block_modules(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_block_modules) && !p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Enabling \"blocking modules\" feature.\n");
+         p_print_log(P_LOG_STATE, "Enabling 'block_modules'");
       } else if (p_tmp && !P_CTRL(p_block_modules)) {
-         p_print_log(P_LKRG_CRIT,
-                     "Disabling \"blocking modules\" feature.\n");
+         p_print_log(P_LOG_STATE, "Disabling 'block_modules'");
       }
    }
    p_lkrg_close_rw();
@@ -521,25 +508,34 @@ static int p_sysctl_block_modules(struct ctl_table *p_table, int p_write,
 static int p_sysctl_log_level(struct ctl_table *p_table, int p_write,
                               void __user *p_buffer, size_t *p_len, loff_t *p_pos) {
    int p_ret;
+   unsigned int p_log_level_old;
    static const char * const p_log_level_string[] = {
-      "NONE",
+      "ALERT",
       "ALIVE",
-      "ERROR",
-      "WARN",
-      "INFO"
+      "FAULT",
+      "ISSUE",
+      "WATCH"
 #if defined(P_LKRG_DEBUG)
       ,"DEBUG",
-      "STRONG_DEBUG"
+      "FLOOD"
 #endif
    };
 
-   p_lkrg_open_rw();
+   p_log_level_new = p_log_level_old = P_CTRL(p_log_level);
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
-      p_print_log(P_LKRG_CRIT, "New log level => %d (%s)\n",
-                  P_CTRL(p_log_level),
-                  p_log_level_string[P_CTRL(p_log_level]));
+      if (p_log_level_new != p_log_level_old) {
+         int increasing = p_log_level_new > p_log_level_old;
+         p_lkrg_open_rw();
+         if (increasing)
+            P_CTRL(p_log_level) = p_log_level_new;
+         p_print_log(P_LOG_STATE, "Changing 'log_level' from %d (%s) to %d (%s)",
+                     p_log_level_old, p_log_level_string[p_log_level_old],
+                     p_log_level_new, p_log_level_string[p_log_level_new]);
+         if (!increasing)
+            P_CTRL(p_log_level) = p_log_level_new;
+         p_lkrg_close_rw();
+      }
    }
-   p_lkrg_close_rw();
 
    return p_ret;
 }
@@ -597,11 +593,9 @@ static int p_sysctl_heartbeat(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_heartbeat) && !p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Enabling heartbeat message.\n");
+         p_print_log(P_LOG_STATE, "Enabling 'heartbeat'");
       } else if (p_tmp && !P_CTRL(p_heartbeat)) {
-         p_print_log(P_LKRG_CRIT,
-                     "Disabling heartbeat message.\n");
+         p_print_log(P_LOG_STATE, "Disabling 'heartbeat'");
       }
    }
    p_lkrg_close_rw();
@@ -620,21 +614,19 @@ static int p_sysctl_smep_validate(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_smep_validate) && !p_tmp) {
+         P_CTRL(p_profile_validate) = 9;
          if (boot_cpu_has(X86_FEATURE_SMEP)) {
-            p_print_log(P_LKRG_CRIT,
-                   "Enabling SMEP validation feature.\n");
+            p_print_log(P_LOG_STATE, "Enabling 'smep_validate'");
             P_ENABLE_SMEP_FLAG(p_pcfi_CPU_flags);
          } else {
-            p_print_log(P_LKRG_ERR,
-                   "System does NOT support SMEP. LKRG can't enable SMEP validation :(\n");
+/* FIXME: We had temporarily enabled P_CTRL(p_smep_validate) - is it safe? */
             P_CTRL(p_smep_validate) = 0;
             P_CTRL(p_smep_enforce) = 0;
+            p_print_log(P_LOG_ISSUE, "System does not support SMEP, which won't be validated");
          }
-         P_CTRL(p_profile_validate) = 9;
       } else if (p_tmp && !P_CTRL(p_smep_validate)) {
-         p_print_log(P_LKRG_CRIT,
-                     "Disabling SMEP validation feature.\n");
          P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Disabling 'smep_validate'");
       }
 
    }
@@ -648,7 +640,7 @@ static int p_sysctl_smep_enforce(struct ctl_table *p_table, int p_write,
 
    int p_ret;
    unsigned int p_tmp;
-   char *p_str[] = {
+   static const char * const p_str[] = {
       "LOG & ACCEPT",
       "LOG & RESTORE",
       "PANIC"
@@ -658,21 +650,17 @@ static int p_sysctl_smep_enforce(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_smep_enforce) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"smep_enforce\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_smep_enforce),
-                     p_str[P_CTRL(p_smep_enforce)]
-                     );
          P_CTRL(p_profile_enforce) = 9;
          if (boot_cpu_has(X86_FEATURE_SMEP)) {
+            p_print_log(P_LOG_STATE, "Changing 'smep_enforce' from %d (%s) to %d (%s)",
+                        p_tmp, p_str[p_tmp],
+                        P_CTRL(p_smep_enforce), p_str[P_CTRL(p_smep_enforce)]);
             P_ENABLE_SMEP_FLAG(p_pcfi_CPU_flags);
          } else {
-            p_print_log(P_LKRG_ERR,
-                   "System does NOT support SMEP. LKRG's SMEP validation will be disabled :(\n");
+/* FIXME: We had temporarily enabled P_CTRL(p_smep_enforce) - is it safe? */
             P_CTRL(p_smep_enforce) = 0;
             P_CTRL(p_smep_validate) = 0;
+            p_print_log(P_LOG_ISSUE, "System does not support SMEP, which won't be validated");
          }
       }
    }
@@ -691,21 +679,19 @@ static int p_sysctl_smap_validate(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_smap_validate) && !p_tmp) {
+         P_CTRL(p_profile_validate) = 9;
          if (boot_cpu_has(X86_FEATURE_SMAP)) {
-            p_print_log(P_LKRG_CRIT,
-                   "Enabling SMAP validation feature.\n");
+            p_print_log(P_LOG_STATE, "Enabling 'smap_validate'");
             P_ENABLE_SMAP_FLAG(p_pcfi_CPU_flags);
          } else {
-            p_print_log(P_LKRG_ERR,
-                   "System does NOT support SMAP. LKRG can't enable SMAP validation :(\n");
+/* FIXME: We had temporarily enabled P_CTRL(p_smap_validate) - is it safe? */
             P_CTRL(p_smap_validate) = 0;
             P_CTRL(p_smap_enforce) = 0;
+            p_print_log(P_LOG_ISSUE, "System does not support SMAP, which won't be validated");
          }
-         P_CTRL(p_profile_validate) = 9;
       } else if (p_tmp && !P_CTRL(p_smap_validate)) {
-         p_print_log(P_LKRG_CRIT,
-                     "Disabling SMAP validation feature.\n");
          P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Disabling 'smap_validate'");
       }
 
    }
@@ -719,7 +705,7 @@ static int p_sysctl_smap_enforce(struct ctl_table *p_table, int p_write,
 
    int p_ret;
    unsigned int p_tmp;
-   char *p_str[] = {
+   static const char * const p_str[] = {
       "LOG & ACCEPT",
       "LOG & RESTORE",
       "PANIC"
@@ -729,21 +715,17 @@ static int p_sysctl_smap_enforce(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_smap_enforce) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"smap_enforce\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_smap_enforce),
-                     p_str[P_CTRL(p_smap_enforce)]
-                     );
          P_CTRL(p_profile_enforce) = 9;
          if (boot_cpu_has(X86_FEATURE_SMAP)) {
+            p_print_log(P_LOG_STATE, "Changing 'smap_enforce' from %d (%s) to %d (%s)",
+                        p_tmp, p_str[p_tmp],
+                        P_CTRL(p_smap_enforce), p_str[P_CTRL(p_smap_enforce)]);
             P_ENABLE_SMAP_FLAG(p_pcfi_CPU_flags);
          } else {
-            p_print_log(P_LKRG_ERR,
-                   "System does NOT support SMAP. LKRG's SMAP validation will be disabled :(\n");
+/* FIXME: We had temporarily enabled P_CTRL(p_smap_enforce) - is it safe? */
             P_CTRL(p_smap_enforce) = 0;
             P_CTRL(p_smap_validate) = 0;
+            p_print_log(P_LOG_ISSUE, "System does not support SMAP, which won't be validated");
          }
       }
    }
@@ -768,14 +750,10 @@ static int p_sysctl_umh_validate(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_umh_validate) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"umh_validate\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_umh_validate),
-                     p_str[P_CTRL(p_umh_validate)]
-                     );
          P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Changing 'umh_validate' from %d (%s) to %d (%s)",
+                     p_tmp, p_str[p_tmp],
+                     P_CTRL(p_umh_validate), p_str[P_CTRL(p_umh_validate)]);
       }
    }
    p_lkrg_close_rw();
@@ -788,7 +766,7 @@ static int p_sysctl_umh_enforce(struct ctl_table *p_table, int p_write,
 
    int p_ret;
    unsigned int p_tmp;
-   char *p_str[] = {
+   static const char * const p_str[] = {
       "LOG ONLY",
       "PREVENT EXECUTION",
       "PANIC"
@@ -798,14 +776,10 @@ static int p_sysctl_umh_enforce(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_umh_enforce) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"umh_enforce\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_umh_enforce),
-                     p_str[P_CTRL(p_umh_enforce)]
-                     );
          P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Changing 'umh_enforce' from %d (%s) to %d (%s)",
+                     p_tmp, p_str[p_tmp],
+                     P_CTRL(p_umh_enforce), p_str[P_CTRL(p_umh_enforce)]);
       }
    }
    p_lkrg_close_rw();
@@ -824,6 +798,8 @@ static int p_sysctl_msr_validate(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_msr_validate) && !p_tmp) {
+         P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Enabling 'msr_validate'");
          spin_lock(&p_db_lock);
          memset(p_db.p_CPU_metadata_array,0,sizeof(p_CPU_metadata_hash_mem)*p_db.p_cpu.p_nr_cpu_ids);
          for_each_present_cpu(p_cpu) {
@@ -833,16 +809,12 @@ static int p_sysctl_msr_validate(struct ctl_table *p_table, int p_write,
          }
          p_db.p_CPU_metadata_hashes = hash_from_CPU_data(p_db.p_CPU_metadata_array);
          spin_unlock(&p_db_lock);
-         p_print_log(P_LKRG_CRIT,
-                     "Enabling MSRs verification during kernel integrity validation (kINT).\n");
-         P_CTRL(p_profile_validate) = 9;
       } else if (p_tmp && !P_CTRL(p_msr_validate)) {
+         P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Disabling 'msr_validate'");
          spin_lock(&p_db_lock);
          p_db.p_CPU_metadata_hashes = hash_from_CPU_data(p_db.p_CPU_metadata_array);
          spin_unlock(&p_db_lock);
-         p_print_log(P_LKRG_CRIT,
-                     "Disabling MSRs verification during kernel integrity validation (kINT).\n");
-         P_CTRL(p_profile_validate) = 9;
       }
    }
    p_lkrg_close_rw();
@@ -865,14 +837,10 @@ static int p_sysctl_pcfi_validate(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_pcfi_validate) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"pcfi_validate\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_pcfi_validate),
-                     p_str[P_CTRL(p_pcfi_validate)]
-                     );
          P_CTRL(p_profile_validate) = 9;
+         p_print_log(P_LOG_STATE, "Changing 'pcfi_validate' from %d (%s) to %d (%s)",
+                     p_tmp, p_str[p_tmp],
+                     P_CTRL(p_pcfi_validate), p_str[P_CTRL(p_pcfi_validate)]);
       }
    }
    p_lkrg_close_rw();
@@ -885,7 +853,7 @@ static int p_sysctl_pcfi_enforce(struct ctl_table *p_table, int p_write,
 
    int p_ret;
    unsigned int p_tmp;
-   char *p_str[] = {
+   static const char * const p_str[] = {
       "LOG ONLY",
       "KILL TASK",
       "PANIC"
@@ -895,14 +863,10 @@ static int p_sysctl_pcfi_enforce(struct ctl_table *p_table, int p_write,
    p_lkrg_open_rw();
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_pcfi_enforce) != p_tmp) {
-         p_print_log(P_LKRG_CRIT,
-                     "Changing \"pcfi_enforce\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
-                     p_tmp,
-                     p_str[p_tmp],
-                     P_CTRL(p_pcfi_enforce),
-                     p_str[P_CTRL(p_pcfi_enforce)]
-                     );
          P_CTRL(p_profile_enforce) = 9;
+         p_print_log(P_LOG_STATE, "Changing 'pcfi_enforce' from %d (%s) to %d (%s)",
+                     p_tmp, p_str[p_tmp],
+                     P_CTRL(p_pcfi_enforce), p_str[P_CTRL(p_pcfi_enforce)]);
       }
    }
    p_lkrg_close_rw();
@@ -929,8 +893,8 @@ static int p_sysctl_profile_validate(struct ctl_table *p_table, int p_write,
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_profile_validate) != p_tmp) {
          if (P_CTRL(p_profile_validate) > 4 && P_CTRL(p_profile_validate) != 9) {
-            p_print_log(P_LKRG_CRIT, "Invalid \"profile_validate\" value.\n");
             P_CTRL(p_profile_validate) = p_tmp;
+            p_print_log(P_LOG_ISSUE, "Attempted to set 'profile_validate' to an unsupported value");
          } else {
 
             switch (P_CTRL(p_profile_validate)) {
@@ -1140,13 +1104,11 @@ static int p_sysctl_profile_validate(struct ctl_table *p_table, int p_write,
 
             }
 
-            p_print_log(P_LKRG_CRIT,
-                   "Changing \"profile_validate\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
+            p_print_log(P_LOG_STATE, "Changing 'profile_validate' from %d (%s) to %d (%s)",
                    p_tmp,
                    (p_tmp != 9) ? p_str[p_tmp] : "Custom",
                    P_CTRL(p_profile_validate),
-                   (P_CTRL(p_profile_validate) != 9) ? p_str[P_CTRL(p_profile_validate)] : "Custom"
-                   );
+                   (P_CTRL(p_profile_validate) != 9) ? p_str[P_CTRL(p_profile_validate)] : "Custom");
          }
       }
    }
@@ -1172,8 +1134,8 @@ static int p_sysctl_profile_enforce(struct ctl_table *p_table, int p_write,
    if ( (p_ret = proc_dointvec_minmax(p_table, p_write, p_buffer, p_len, p_pos)) == 0 && p_write) {
       if (P_CTRL(p_profile_enforce) != p_tmp) {
          if (P_CTRL(p_profile_enforce) > 3 && P_CTRL(p_profile_enforce) != 9) {
-            p_print_log(P_LKRG_CRIT, "Invalid \"profile_enforce\" value.\n");
             P_CTRL(p_profile_enforce) = p_tmp;
+            p_print_log(P_LOG_ISSUE, "Attempted to set 'profile_enforce' to an unsupported value");
          } else {
 
             switch (P_CTRL(p_profile_enforce)) {
@@ -1287,13 +1249,11 @@ static int p_sysctl_profile_enforce(struct ctl_table *p_table, int p_write,
 
             }
 
-            p_print_log(P_LKRG_CRIT,
-                   "Changing \"profile_enforce\" logic. From Old[%d | %s] to new[%d | %s] one.\n",
+            p_print_log(P_LOG_STATE, "Changing 'profile_enforce' from %d (%s) to %d (%s)",
                    p_tmp,
                    (p_tmp != 9) ? p_str[p_tmp] : "Custom",
                    P_CTRL(p_profile_enforce),
-                   (P_CTRL(p_profile_enforce) != 9) ? p_str[P_CTRL(p_profile_enforce)] : "Custom"
-                   );
+                   (P_CTRL(p_profile_enforce) != 9) ? p_str[P_CTRL(p_profile_enforce)] : "Custom");
          }
       }
    }
@@ -1306,8 +1266,6 @@ static int p_sysctl_profile_enforce(struct ctl_table *p_table, int p_write,
 int p_register_comm_channel(void) {
 
    if ( (p_sysctl_handle = register_sysctl_table(p_lkrg_sysctl_base)) == NULL) {
-      p_print_log(P_LKRG_ERR,
-             "Communication channel error! Can't register 'sysctl' table :( Exiting...\n");
       return P_LKRG_GENERAL_ERROR;
    }
 

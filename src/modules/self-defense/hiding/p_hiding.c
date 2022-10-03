@@ -27,8 +27,7 @@ struct module_notes_attrs *p_find_notes_attrs;
 void p_hide_itself(void) {
 
    if (P_CTRL(p_hide_lkrg)) {
-      p_print_log(P_LKRG_WARN,
-             "Module is already hidden!\n");
+      p_print_log(P_LOG_WATCH, "Module is already hidden");
       return;
    }
 
@@ -40,7 +39,6 @@ void p_hide_itself(void) {
 
    /* We are heavily consuming module list here - take 'module_mutex' */
    mutex_lock(P_SYM(p_module_mutex));
-   spin_lock(&p_db_lock);
 
    P_HIDE_FROM_MODULE_LIST(P_SYM(p_find_me));
    P_HIDE_FROM_KOBJ(P_SYM(p_find_me));
@@ -63,7 +61,6 @@ void p_hide_itself(void) {
 
    P_CTRL(p_hide_lkrg) = 1;
 
-   spin_unlock(&p_db_lock);
    /* Release the 'module_mutex' */
    mutex_unlock(P_SYM(p_module_mutex));
 }
@@ -71,21 +68,19 @@ void p_hide_itself(void) {
 #ifdef P_LKRG_UNHIDE
 void p_unhide_itself(void) {
 
-   struct module     *p_tmp_mod    = P_GLOBAL_TO_MODULE(P_SYM(p_global_modules));
+   struct module     *p_tmp_mod    = P_GLOBAL_TO_MODULE(P_SYM(p_modules));
    struct kset       *p_tmp_kset   = p_tmp_mod->mkobj.kobj.kset;
    struct kobj_type  *p_tmp_ktype  = (struct kobj_type *)((void*)p_tmp_mod->mkobj.kobj.ktype);
 
    if (!P_CTRL(p_hide_lkrg)) {
-      p_print_log(P_LKRG_WARN,
-             "Module is already unhidden (visible)!\n");
+      p_print_log(P_LOG_WATCH, "Module is already unhidden (visible)");
       return;
    }
 
    /* We are heavily consuming module list here - take 'module_mutex' */
    mutex_lock(P_SYM(p_module_mutex));
-   spin_lock(&p_db_lock);
 
-   P_UNHIDE_FROM_MODULE_LIST(P_SYM(p_find_me),P_SYM(p_global_modules));
+   P_UNHIDE_FROM_MODULE_LIST(P_SYM(p_find_me),P_SYM(p_modules));
    P_UNHIDE_FROM_KOBJ(P_SYM(p_find_me),p_tmp_kset,p_tmp_ktype);
 
 //   P_UNHIDE_FROM_KOBJ(P_SYM(p_find_me),p_find_kobj_parent,
@@ -106,7 +101,7 @@ void p_unhide_itself(void) {
 
    P_CTRL(p_hide_lkrg) = 0;
 
-   spin_unlock(&p_db_lock);
+p_unhide_itself_exit:
    /* Release the 'module_mutex' */
    mutex_unlock(P_SYM(p_module_mutex));
 }

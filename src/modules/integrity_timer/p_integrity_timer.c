@@ -42,9 +42,8 @@ static void p_offload_cache_zero(void *p_arg) {
 int p_offload_cache_init(void) {
 
    if ( (p_offload_cache = kmem_cache_create("p_offload_cache", sizeof(struct work_struct),
-                                             0, SLAB_HWCACHE_ALIGN, p_offload_cache_zero)) == NULL) {
-      p_print_log(P_LKRG_ERR, "kmem_cache_create() for offloading error! :(\n");
-      return -ENOMEM;
+                                             0, P_LKRG_CACHE_FLAGS, p_offload_cache_zero)) == NULL) {
+      return P_LKRG_GENERAL_ERROR;
    }
 
    return P_LKRG_SUCCESS;
@@ -82,11 +81,11 @@ void p_offload_work(struct timer_list *p_timer) {
 
    struct work_struct *p_worker;
 
-   p_debug_log(P_LKRG_STRONG_DBG,
+   p_debug_log(P_LOG_FLOOD,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
-          "p_timer => %ld\n",p_timer);
+          "p_timer => %ld",p_timer);
 #else
-          "p_timer => %lx\n",(unsigned long)p_timer);
+          "p_timer => %lx",(unsigned long)p_timer);
 #endif
 
    while ( (p_worker = p_alloc_offload()) == NULL); // Should never be NULL
@@ -154,8 +153,7 @@ void p_check_integrity(struct work_struct *p_work) {
    /* Find information about current CPUs in the system */
    p_get_cpus(&p_tmp_cpu_info);
    if (p_cmp_cpus(&p_db.p_cpu,&p_tmp_cpu_info)) {
-      p_print_log(P_LKRG_WARN,
-             "!!! INTEGRITY WARNING: Using CPU number from original database !!!\n");
+      p_print_log(P_LOG_ISSUE, "Using CPU number from original database");
    }
 
    /*
@@ -175,7 +173,7 @@ void p_check_integrity(struct work_struct *p_work) {
    //for_each_online_cpu(p_tmp) {
 //      if (cpu_online(p_tmp)) {
 //         if (p_tmp_cpuid != p_tmp) {
-//printk(KERN_INFO "smp_call_function_single() for cpu[%d]\n",p_tmp);
+//p_debug_log(P_LOG_DEBUG, "smp_call_function_single() for cpu[%d]", p_tmp);
             /*
              * smp_call_function_single() internally 'locks' the execution core.
              * This means you should not call this function with IRQ disabled.
@@ -183,7 +181,7 @@ void p_check_integrity(struct work_struct *p_work) {
              * how this function reacts.
              */
             //smp_call_function_single(p_tmp,p_dump_CPU_metadata,p_tmp_cpus,true);
-//printk(KERN_INFO "smp_call_function_single() -> DONE\n");
+//p_debug_log(P_LOG_DEBUG, "smp_call_function_single() -> DONE");
 //         }
 //      }
    //}
@@ -221,12 +219,12 @@ void p_check_integrity(struct work_struct *p_work) {
    while( (p_ret = p_kmod_hash(&p_module_list_nr_tmp,&p_module_list_tmp,
                                &p_module_kobj_nr_tmp,&p_module_kobj_tmp, 0x0)) != P_LKRG_SUCCESS) {
       if (p_ret == P_LKRG_KMOD_DUMP_RACE) {
-         p_print_log(P_LKRG_ERR,
-                "Function <p_check_integrity> won race with module activity thread... We need to cancel this context! :(\n");
+         p_print_log(P_LOG_FAULT,
+                "Function <p_check_integrity> won race with module activity thread... We need to cancel this context!");
          goto p_check_integrity_cancel;
       }
-      p_print_log(P_LKRG_ERR,
-             "Function <p_check_integrity> - p_kmod_hash() failed! Memory problems... :(\n");
+      p_print_log(P_LOG_FAULT,
+             "Function <p_check_integrity> - p_kmod_hash() failed! Memory allocation problems...");
       schedule();
    }
 /*
@@ -238,15 +236,16 @@ void p_check_integrity(struct work_struct *p_work) {
 
    if (p_db.p_CPU_metadata_hashes != p_tmp_hash) {
       /* I'm hacked! ;( */
-      p_print_log(P_LKRG_CRIT,
-             "ALERT !!! HASHES FROM CPUs METADATA IS DIFFERENT- it is [0x%llx] and should be [0x%llx] !!!\n",
-                                                               p_tmp_hash,p_db.p_CPU_metadata_hashes);
-      P_KINT_IF_ACCEPT(p_db.p_CPU_metadata_hashes,
-                       p_tmp_hash,
-                       p_hack_check);
+      p_print_log(P_LOG_ALERT, "DETECT: CPU: Hash of CPU metadata has changed unexpectedly");
+#define P_KINT_IF_ACCEPT(old, new) \
+      if (!P_CTRL(p_kint_enforce)) \
+         old = new; \
+      p_hack_check++;
+      P_KINT_IF_ACCEPT(p_db.p_CPU_metadata_hashes, p_tmp_hash)
    }
 
-   p_print_log(P_LKRG_INFO,"Hash from CPUs metadata => [0x%llx]\n",p_tmp_hash);
+   p_print_log(P_LOG_WATCH, "Hash of CPU metadata expected 0x%llx vs. actual 0x%llx",
+      p_db.p_CPU_metadata_hashes, p_tmp_hash);
 
    /*
     * Checking memory block:
@@ -258,15 +257,12 @@ void p_check_integrity(struct work_struct *p_work) {
 
       if (p_db.kernel_ex_table.p_hash != p_tmp_hash) {
          /* I'm hacked! ;( */
-         p_print_log(P_LKRG_CRIT,
-                "ALERT !!! EXCEPTION TABLE HASH IS DIFFERENT - it is [0x%llx] and should be [0x%llx] !!!\n",
-                                                                  p_tmp_hash,p_db.kernel_ex_table.p_hash);
-         P_KINT_IF_ACCEPT(p_db.kernel_ex_table.p_hash,
-                          p_tmp_hash,
-                          p_hack_check);
+         p_print_log(P_LOG_ALERT, "DETECT: Kernel: Exception table hash changed unexpectedly");
+         P_KINT_IF_ACCEPT(p_db.kernel_ex_table.p_hash, p_tmp_hash)
       }
 
-      p_print_log(P_LKRG_INFO,"Hash from kernel exception table => [0x%llx]\n",p_tmp_hash);
+      p_print_log(P_LOG_WATCH, "Exception table hash expected 0x%llx vs. actual 0x%llx",
+         p_db.kernel_ex_table.p_hash, p_tmp_hash);
    }
 
    /*
@@ -284,14 +280,12 @@ void p_check_integrity(struct work_struct *p_work) {
 #endif
       /* We detected core kernel .text corruption - we are hacked and can't recover */
       /* I'm hacked! ;( */
-      p_print_log(P_LKRG_CRIT,
-             "ALERT !!! _STEXT MEMORY BLOCK HASH IS DIFFERENT - it is [0x%llx] and should be [0x%llx] !!!\n",
-                                                            p_tmp_hash,p_db.kernel_stext.p_hash);
+      p_print_log(P_LOG_ALERT, "DETECT: Kernel: _stext hash changed unexpectedly");
 #if defined(P_LKRG_JUMP_LABEL_STEXT_DEBUG)
       for (p_tmp = 0; p_tmp < p_db.kernel_stext.p_size; p_tmp++) {
          if (p_str2[p_tmp] != p_str1[p_tmp]) {
             sprint_symbol_no_offset(p_eh_buf,(unsigned long)((unsigned long)p_db.kernel_stext.p_addr+(unsigned long)p_tmp));
-            printk(KERN_CRIT "copy[0x%x] vs now[0x%x] offset[%d | 0x%x] symbol[%s]\n",
+            p_print_log(P_LOG_WATCH, "copy[0x%x] vs now[0x%x] offset[%d | 0x%x] symbol[%s]",
                    p_str2[p_tmp],
                    p_str1[p_tmp],
                    p_tmp,
@@ -300,12 +294,11 @@ void p_check_integrity(struct work_struct *p_work) {
          }
       }
 #endif
-      P_KINT_IF_ACCEPT(p_db.kernel_stext.p_hash,
-                       p_tmp_hash,
-                       p_hack_check);
+      P_KINT_IF_ACCEPT(p_db.kernel_stext.p_hash, p_tmp_hash)
    }
 
-   p_print_log(P_LKRG_INFO,"Hash from _stext memory block => [0x%llx]\n",p_tmp_hash);
+   p_print_log(P_LOG_WATCH, "_stext hash expected 0x%llx vs. actual 0x%llx",
+      p_db.kernel_stext.p_hash, p_tmp_hash);
 
    /*
     * Checking memory block:
@@ -321,15 +314,12 @@ void p_check_integrity(struct work_struct *p_work) {
 
       if (p_db.kernel_rodata.p_hash != p_tmp_hash) {
          /* I'm hacked! ;( */
-         p_print_log(P_LKRG_CRIT,
-                "ALERT !!! _RODATA MEMORY BLOCK HASH IS DIFFERENT - it is [0x%llx] and should be [0x%llx] !!!\n",
-                                                                  p_tmp_hash,p_db.kernel_rodata.p_hash);
-         P_KINT_IF_ACCEPT(p_db.kernel_rodata.p_hash,
-                          p_tmp_hash,
-                          p_hack_check);
+         p_print_log(P_LOG_ALERT, "DETECT: Kernel: _rodata hash changed unexpectedly");
+         P_KINT_IF_ACCEPT(p_db.kernel_rodata.p_hash, p_tmp_hash)
       }
 
-      p_print_log(P_LKRG_INFO,"Hash from _rodata memory block => [0x%llx]\n",p_tmp_hash);
+      p_print_log(P_LOG_WATCH, "_rodata hash expected 0x%llx vs. actual 0x%llx",
+         p_db.kernel_rodata.p_hash, p_tmp_hash);
    }
 
    /*
@@ -346,42 +336,18 @@ void p_check_integrity(struct work_struct *p_work) {
 
       if (p_db.kernel_iommu_table.p_hash != p_tmp_hash) {
          /* I'm hacked! ;( */
-         p_print_log(P_LKRG_CRIT,
-                "ALERT !!! IOMMU TABLE HASH IS DIFFERENT - it is [0x%llx] and should be [0x%llx] !!!\n",
-                                                                  p_tmp_hash,p_db.kernel_iommu_table.p_hash);
-         P_KINT_IF_ACCEPT(p_db.kernel_iommu_table.p_hash,
-                          p_tmp_hash,
-                          p_hack_check);
+         p_print_log(P_LOG_ALERT, "DETECT: Kernel: IOMMU table hash changed unexpectedly");
+         P_KINT_IF_ACCEPT(p_db.kernel_iommu_table.p_hash, p_tmp_hash)
       }
 
-      p_print_log(P_LKRG_INFO,"Hash from IOMMU table => [0x%llx]\n",p_tmp_hash);
+      p_print_log(P_LOG_WATCH, "IOMMU table hash expected 0x%llx vs. actual 0x%llx",
+         p_db.kernel_iommu_table.p_hash, p_tmp_hash);
    }
-
-/*
-   unsigned int p_module_list_nr_tmp; // Count by walk through the list first
-   unsigned int p_module_kobj_nr_tmp; // Count by walk through the list first
-   p_module_list_mem *p_module_list_tmp;
-   p_module_kobj_mem *p_module_kobj_tmp;
-*/
 
    /*
     * Checking this kernel modules integrity.
     */
 
-   /*
-    * Memory allocation may fail... let's loop here!
-    */
-//   while(p_kmod_hash(&p_module_list_nr_tmp,&p_module_list_tmp,
-//                     &p_module_kobj_nr_tmp,&p_module_kobj_tmp) != P_LKRG_SUCCESS);
-
-/*
-   if (p_kmod_hash(&p_module_list_nr_tmp,&p_module_list_tmp,
-                   &p_module_kobj_nr_tmp,&p_module_kobj_tmp) != P_LKRG_SUCCESS) {
-      printk(P_LKRG_PRINT P_LKRG_SIGNATURE
-         "<p_check_integrity> p_kmod_hash() ERROR! - skipping integrity check of modules!\n");
-//      return P_LKRG_GENERAL_ERROR;
-   }
-*/
 
    /*
     * If we enter this block it means we've found module which is
@@ -405,7 +371,6 @@ void p_check_integrity(struct work_struct *p_work) {
           * NOTE: We should have been able to log this module in the loading
           *       stage by notifier!
           */
-         P_KINT_HACK_I(p_hack_check);
 
          p_tmp_diff = p_module_kobj_nr_tmp - p_module_list_nr_tmp;
 
@@ -427,184 +392,92 @@ void p_check_integrity(struct work_struct *p_work) {
                   /* Maybe we have sleeping module activity event ? */
                   if (mutex_is_locked(&p_module_activity)) {
                      // STRONG_DEBUG
-                     p_debug_log(P_LKRG_STRONG_DBG,
-                                "Hidden[0x%lx] p_module_activity_ptr[0x%lx]\n",
+                     p_debug_log(P_LOG_FLOOD,
+                                "Hidden[0x%lx] p_module_activity_ptr[0x%lx]",
                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
                                 (unsigned long)p_module_activity_ptr);
                      if (p_module_kobj_tmp[p_tmp_hash].p_mod == p_module_activity_ptr) {
-                        P_KINT_HACK_D(p_hack_check);
-                        p_print_log(P_LKRG_INFO,
-                              "Found less[%d] modules in module list[%d] than in KOBJ[%d]\n",
-                              p_tmp_diff,
-                              p_module_list_nr_tmp,
-                              p_module_kobj_nr_tmp);
-                        p_print_log(P_LKRG_INFO,
-                              "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_module_kobj_tmp[p_tmp_hash].p_name,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                              p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                              p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                        p_print_log(P_LKRG_INFO,
-                                    "Lost module is the same as on-going module activity events (system is stable).\n");
+#define P_PRINT_WATCH_FEWER(lost_or_extra, nr1, name1, nr2, list2, name2) \
+                        p_print_log(P_LOG_WATCH, "Found %u fewer modules in " name1 " (%u) than in " name2 " (%u)", \
+                           p_tmp_diff, nr1, nr2); \
+                        p_print_log(P_LOG_WATCH, lost_or_extra \
+                           " module name[%s] addr[0x%lx] core[0x%lx] size[0x%x] hash[0x%llx]", \
+                           list2[p_tmp_hash].p_name, \
+                           (unsigned long)list2[p_tmp_hash].p_mod, \
+                           (unsigned long)list2[p_tmp_hash].p_module_core, \
+                           list2[p_tmp_hash].p_core_text_size, \
+                           list2[p_tmp_hash].p_mod_core_text_hash);
+#define P_PRINT_ONGOING(lost_or_extra) \
+                        p_print_log(P_LOG_WATCH, lost_or_extra \
+                           " module is the same as on-going module activity events (system is stable)");
+                        P_PRINT_WATCH_FEWER("Lost",
+                           p_module_list_nr_tmp, "module list",
+                           p_module_kobj_nr_tmp, p_module_kobj_tmp, "KOBJ")
+                        P_PRINT_ONGOING("Lost")
                      } else {
                         p_tmp_mod = P_SYM(p_find_module(p_module_kobj_tmp[p_tmp_hash].p_name));
                         if (p_tmp_mod) {
-                           if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                              P_KINT_HACK_D(p_hack_check);
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in module list[%d] than in KOBJ[%d]\n",
-                                    p_tmp_diff,
-                                    p_module_list_nr_tmp,
-                                    p_module_kobj_nr_tmp);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_module_kobj_tmp[p_tmp_hash].p_name,
-                                    (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                    (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                    p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                    p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                    (p_tmp_mod->state == 1) ? "COMING" :
-                                    (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                    (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                           } else {
-                              P_KINT_HACK_D(p_hack_check);
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in module list[%d] than in KOBJ[%d]\n",
-                                    p_tmp_diff,
-                                    p_module_list_nr_tmp,
-                                    p_module_kobj_nr_tmp);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_module_kobj_tmp[p_tmp_hash].p_name,
-                                    (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                    (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                    p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                    p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                    "identified through the official API. Most likely race condition appeared when system "
-                                    "was rebuilding database (system is stable).\n");
-                              // TODO: Dump module
-                           }
+                           P_PRINT_WATCH_FEWER("Lost",
+                              p_module_list_nr_tmp, "module list",
+                              p_module_kobj_nr_tmp, p_module_kobj_tmp, "KOBJ")
+#define P_PRINT_LIVE_OR_NOT \
+                           if (p_tmp_mod->state == MODULE_STATE_LIVE) \
+                              p_print_log(P_LOG_WATCH, \
+                                 "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly " \
+                                 "identified through the official API. Most likely race condition appeared when system " \
+                                 "was rebuilding database (system is stable)."); \
+                           else \
+                              p_print_log(P_LOG_WATCH, \
+                                 "Lost module is not in the 'LIVE' state but in [%s] state (system is stable)", \
+                                 (p_tmp_mod->state == 1) ? "COMING" : \
+                                 (p_tmp_mod->state == 2) ? "GOING AWAY" : \
+                                 (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
+                           P_PRINT_LIVE_OR_NOT
                         } else {
-                           p_print_log(P_LKRG_CRIT,
-                                  "ALERT !!! FOUND LESS[%d] MODULES IN MODULE LIST[%d] THAN IN KOBJ[%d]\n",
-                                  p_tmp_diff,
-                                  p_module_list_nr_tmp,
-                                  p_module_kobj_nr_tmp);
-                           /* Let's dump information about 'hidden' module */
-                           p_print_log(P_LKRG_CRIT,
-                              "HIDDEN MODULE:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_module_kobj_tmp[p_tmp_hash].p_name,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                              p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                              p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_CRIT,
-                                  "!! MOST LIKELY SYSTEM IS HACKED - MODULE WILL BE DUMPED !! **\n");
-
-                           // Did NOT find it in the system via official API...
-                           // MOST LIKELY WE ARE HACKED!
-                           // TODO: Dump module
+#define P_PRINT_ALERT_FEWER(nr1, name1, nr2, list2, name2) \
+                           /* Did NOT find it in the system via official API... MOST LIKELY WE ARE HACKED! */ \
+                           p_hack_check++; \
+                           p_print_log(P_LOG_ALERT, \
+                              "DETECT: Kernel: Found %u fewer modules in " name1 " (%u) than in " name2 " (%u), " \
+                              "maybe hidden module name %s", \
+                              p_tmp_diff, nr1, nr2, list2[p_tmp_hash].p_name); \
+                           /* Let's dump information about 'hidden' module */ \
+                           p_print_log(P_LOG_WATCH, \
+                              "Hidden module name[%s] addr[0x%lx] core[0x%lx] size[0x%x] hash[0x%llx]", \
+                              list2[p_tmp_hash].p_name, \
+                              (unsigned long)list2[p_tmp_hash].p_mod, \
+                              (unsigned long)list2[p_tmp_hash].p_module_core, \
+                              list2[p_tmp_hash].p_core_text_size, \
+                              list2[p_tmp_hash].p_mod_core_text_hash);
+                           P_PRINT_ALERT_FEWER(p_module_list_nr_tmp, "module list",
+                                               p_module_kobj_nr_tmp, p_module_kobj_tmp, "KOBJ")
                         }
                      }
                   } else {
                      p_tmp_mod = P_SYM(p_find_module(p_module_kobj_tmp[p_tmp_hash].p_name));
                      if (p_tmp_mod) {
-                        if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                           P_KINT_HACK_D(p_hack_check);
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in module list[%d] than in KOBJ[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_list_nr_tmp,
-                                 p_module_kobj_nr_tmp);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_kobj_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                 p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                 (p_tmp_mod->state == 1) ? "COMING" :
-                                 (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                 (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                        } else {
-                           P_KINT_HACK_D(p_hack_check);
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in module list[%d] than in KOBJ[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_list_nr_tmp,
-                                 p_module_kobj_nr_tmp);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_kobj_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                 p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                 "identified through the official API. Most likely race condition appeared when system "
-                                 "was rebuilding database (system is stable).\n");
-                           // TODO: Dump module
-                        }
+                        P_PRINT_WATCH_FEWER("Lost",
+                           p_module_list_nr_tmp, "module list",
+                           p_module_kobj_nr_tmp, p_module_kobj_tmp, "KOBJ")
+                        P_PRINT_LIVE_OR_NOT
                      } else {
-                           p_print_log(P_LKRG_CRIT,
-                                  "ALERT !!! FOUND LESS[%d] MODULES IN MODULE LIST[%d] THAN IN KOBJ[%d]\n",
-                                  p_tmp_diff,
-                                  p_module_list_nr_tmp,
-                                  p_module_kobj_nr_tmp);
-                           /* Let's dump information about 'hidden' module */
-                           p_print_log(P_LKRG_CRIT,
-                              "HIDDEN MODULE:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_module_kobj_tmp[p_tmp_hash].p_name,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                              p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                              p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_CRIT,
-                                  "!! MOST LIKELY SYSTEM IS HACKED - MODULE WILL BE DUMPED !! **\n");
-
-                           // Did NOT find it in the system via official API...
-                           // MOST LIKELY WE ARE HACKED!
-                           // TODO: Dump module
+                        P_PRINT_ALERT_FEWER(p_module_list_nr_tmp, "module list",
+                                            p_module_kobj_nr_tmp, p_module_kobj_tmp, "KOBJ")
                      }
                   }
                } else {
-                  p_print_log(P_LKRG_CRIT,
-                        "ALERT !!! FOUND LESS[%d] MODULES IN MODULE LIST[%d] THAN IN KOBJ[%d]\n",
-                        p_tmp_diff,
-                        p_module_list_nr_tmp,
-                        p_module_kobj_nr_tmp);
-                  /* Let's dump information about 'hidden' module */
-                  p_print_log(P_LKRG_CRIT,
-                        "HIDDEN MODULE:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                        p_module_kobj_tmp[p_tmp_hash].p_name,
-                        (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                        (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                        p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                        p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                  p_print_log(P_LKRG_CRIT,
-                         "!! MOST LIKELY SYSTEM IS HACKED - MODULE WILL BE DUMPED !! **\n");
-
-                  // Dynamic module blocking is disabled so this situation shouldn't happen
-                  // MOST LIKELY WE ARE HACKED!
-                  // TODO: Dump module
+                  P_PRINT_ALERT_FEWER(p_module_list_nr_tmp, "module list",
+                                      p_module_kobj_nr_tmp, p_module_kobj_tmp, "KOBJ")
                }
             }
          }
-         /* We should never be here... we found more mismatched modules than expected */
-         if (p_tmp_diff != p_tmp_flag_cnt) {
-            p_print_log(P_LKRG_ERR,
-               "We found more[%d] missing modules than expected[%d]... something went wrong ;(\n",
-               p_tmp_flag_cnt,p_tmp_diff);
-         }
-      } else if (p_module_kobj_nr_tmp < p_module_list_nr_tmp) {
+#define P_PRINT_FOUND_MORE \
+         /* We should never be here... we found more mismatched modules than expected */ \
+         if (p_tmp_diff != p_tmp_flag_cnt) \
+            p_print_log(P_LOG_FAULT, "Found more[%d] missing modules than expected[%d]... something went wrong", \
+               p_tmp_flag_cnt, p_tmp_diff);
+         P_PRINT_FOUND_MORE
+      } else if (p_module_kobj_nr_tmp < p_module_list_nr_tmp && P_CTRL(p_log_level) >= P_LOG_WATCH) {
         /*
          * This is strange behaviour. Most of the malicious modules don't remove them from KOBJ
          * Just from module list. If any remove themselves from the KOBJ most likely they also
@@ -630,183 +503,43 @@ void p_check_integrity(struct work_struct *p_work) {
                p_tmp_flag_cnt++;
 
                if (!P_CTRL(p_block_modules)) {
+                  P_PRINT_WATCH_FEWER("Lost",
+                     p_module_kobj_nr_tmp, "KOBJ",
+                     p_module_list_nr_tmp, p_module_list_tmp, "module list")
                   /* Maybe we have sleeping module activity event ? */
                   if (mutex_is_locked(&p_module_activity)) {
                      // STRONG_DEBUG
-                     p_debug_log(P_LKRG_STRONG_DBG,
-                                "Hidden[0x%lx] p_module_activity_ptr[0x%lx]\n",
+                     p_debug_log(P_LOG_FLOOD,
+                                "Hidden[0x%lx] p_module_activity_ptr[0x%lx]",
                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
                                 (unsigned long)p_module_activity_ptr);
                      if (p_module_list_tmp[p_tmp_hash].p_mod == p_module_activity_ptr) {
-                        p_print_log(P_LKRG_INFO,
-                              "Found less[%d] modules in KOBJ[%d] than in module list[%d]\n",
-                              p_tmp_diff,
-                              p_module_kobj_nr_tmp,
-                              p_module_list_nr_tmp);
-                        p_print_log(P_LKRG_INFO,
-                              "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_module_list_tmp[p_tmp_hash].p_name,
-                              (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                              (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                              p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                              p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                        p_print_log(P_LKRG_INFO,
-                                    "Lost module is the same as on-going module activity events (system is stable).\n");
+                        P_PRINT_ONGOING("Lost")
                      } else {
                         p_tmp_mod = P_SYM(p_find_module(p_module_list_tmp[p_tmp_hash].p_name));
                         if (p_tmp_mod) {
-                           if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in KOBJ[%d] than in module list[%d]\n",
-                                    p_tmp_diff,
-                                    p_module_kobj_nr_tmp,
-                                    p_module_list_nr_tmp);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_module_list_tmp[p_tmp_hash].p_name,
-                                    (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                    (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                    p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                    p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                    (p_tmp_mod->state == 1) ? "COMING" :
-                                    (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                    (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                           } else {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in KOBJ[%d] than in module list[%d]\n",
-                                    p_tmp_diff,
-                                    p_module_kobj_nr_tmp,
-                                    p_module_list_nr_tmp);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_module_list_tmp[p_tmp_hash].p_name,
-                                    (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                    (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                    p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                    p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                    "identified through the official API. Most likely race condition appeared when system "
-                                    "was rebuilding database (system is stable).\n");
-                              // TODO: Dump module
-                           }
+                           P_PRINT_LIVE_OR_NOT
                         } else {
-                           p_print_log(P_LKRG_WARN,
-                                 "Found less[%d] modules in KOBJ[%d] than in module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_kobj_nr_tmp,
-                                 p_module_list_nr_tmp);
-                           p_print_log(P_LKRG_WARN,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_list_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                 p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_WARN,
-                                  "Strange behaviour detected - module was found in module list but not in KOBJs (system is stable).\n");
-                           // Did NOT find it in the system via official API...
-                           // MOST LIKELY WE ARE NOT HACKED :)
-                           // TODO: Dump module
+#define P_PRINT_NOT_IN_KOBJ \
+                           p_print_log(P_LOG_WATCH, "Module was found in module list but not in KOBJs (system is stable)"); \
+                           /* Did NOT find it in the system via official API... MOST LIKELY WE ARE NOT HACKED :) */
+                           P_PRINT_NOT_IN_KOBJ
                         }
                      }
                   } else {
                      p_tmp_mod = P_SYM(p_find_module(p_module_list_tmp[p_tmp_hash].p_name));
                      if (p_tmp_mod) {
-                        if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in KOBJ[%d] than in module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_kobj_nr_tmp,
-                                 p_module_list_nr_tmp);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_list_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                 p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                 (p_tmp_mod->state == 1) ? "COMING" :
-                                 (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                 (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                        } else {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in KOBJ[%d] than in module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_kobj_nr_tmp,
-                                 p_module_list_nr_tmp);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_list_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                 p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                 "identified through the official API. Most likely race condition appeared when system "
-                                 "was rebuilding database (system is stable).\n");
-
-                           // TODO: Dump module
-                        }
+                        P_PRINT_LIVE_OR_NOT
                      } else {
-                           p_print_log(P_LKRG_WARN,
-                                 "Found less[%d] modules in KOBJ[%d] than in module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_kobj_nr_tmp,
-                                 p_module_list_nr_tmp);
-                           p_print_log(P_LKRG_WARN,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_list_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                 p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_WARN,
-                                  "Strange behaviour detected - module was found in module list but not in KOBJs (system is stable).\n");
-
-                           // Did NOT find it in the system via official API...
-                           // MOST LIKELY WE ARE NOT HACKED :)
-                           // TODO: Dump module
+                        P_PRINT_NOT_IN_KOBJ
                      }
                   }
                } else {
-                  p_print_log(P_LKRG_WARN,
-                        "Found less[%d] modules in KOBJ[%d] than in module list[%d]\n",
-                        p_tmp_diff,
-                        p_module_kobj_nr_tmp,
-                        p_module_list_nr_tmp);
-                  p_print_log(P_LKRG_WARN,
-                        "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                        p_module_list_tmp[p_tmp_hash].p_name,
-                        (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                        (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                        p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                        p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                  p_print_log(P_LKRG_WARN,
-                        "Strange behaviour detected - module was found in module list but not in KOBJs (system is stable).\n");
-
-                  // Dynamic module blocking is disabled so this situation shouldn't happen
-                  // MOST LIKELY WE ARE NOT HACKED :)
-                  // TODO: Dump module
+                  P_PRINT_NOT_IN_KOBJ
                }
             }
          }
-         /* We should never be here... we found more mismatched modules than expected */
-         if (p_tmp_diff != p_tmp_flag_cnt) {
-            p_print_log(P_LKRG_ERR,
-               "We found more[%d] missing modules than expected[%d]... something went wrong ;(\n",
-               p_tmp_flag_cnt,p_tmp_diff);
-         }
-
-      } else {
-         p_print_log(P_LKRG_CRIT,
-                "I should never be here!... something went wrong ;( module list[%d] KOBJ[%d]\n",
-                p_module_list_nr_tmp,p_module_kobj_nr_tmp);
+         P_PRINT_FOUND_MORE
       }
    }
 
@@ -814,7 +547,6 @@ void p_check_integrity(struct work_struct *p_work) {
    /*
     * We found as many modules in module list as in sysfs
     * Let's validate if our database has the same information as we gathered now
-    *
     */
 
 
@@ -864,163 +596,46 @@ void p_check_integrity(struct work_struct *p_work) {
                p_tmp_flag_cnt++;
 
                // TODO: Module disappeared and we didn't notice it! We shouldn't dump it because
-               // most likely module doesn't exists anymore...
+               // most likely module doesn't exist anymore...
                // But we can try to poke that page where modules used to be to find out scratches
                // of information about it (e.g. name? symbols table?)
 
                if (!P_CTRL(p_block_modules)) {
+                  P_PRINT_WATCH_FEWER("Lost",
+                     p_module_list_nr_tmp, "current module list",
+                     p_db.p_module_list_nr, p_db.p_module_list_array, "DB module list")
                   /* Maybe we have sleeping module activity event ? */
                   if (mutex_is_locked(&p_module_activity)) {
                      // STRONG_DEBUG
-                     p_debug_log(P_LKRG_STRONG_DBG,
-                                "Lost[0x%lx] p_module_activity_ptr[0x%lx]\n",
+                     p_debug_log(P_LOG_FLOOD,
+                                "Lost[0x%lx] p_module_activity_ptr[0x%lx]",
                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_mod,
                                 (unsigned long)p_module_activity_ptr);
                      if (p_db.p_module_list_array[p_tmp_hash].p_mod == p_module_activity_ptr) {
-                        p_print_log(P_LKRG_INFO,
-                              "Found less[%d] modules in current system in module list [%d] than in DB module list[%d]\n",
-                              p_tmp_diff,
-                              p_module_list_nr_tmp,
-                              p_db.p_module_list_nr);
-                        p_print_log(P_LKRG_INFO,
-                              "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_db.p_module_list_array[p_tmp_hash].p_name,
-                              (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_mod,
-                              (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_module_core,
-                              p_db.p_module_list_array[p_tmp_hash].p_core_text_size,
-                              p_db.p_module_list_array[p_tmp_hash].p_mod_core_text_hash);
-                        p_print_log(P_LKRG_INFO,
-                                    "Lost module is the same as on-going module activity events (system is stable).\n");
+                        P_PRINT_ONGOING("Lost")
                      } else {
                         p_tmp_mod = P_SYM(p_find_module(p_db.p_module_list_array[p_tmp_hash].p_name));
                         if (p_tmp_mod) {
-                           if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in current system in module list [%d] than in DB module list[%d]\n",
-                                    p_tmp_diff,
-                                    p_module_list_nr_tmp,
-                                    p_db.p_module_list_nr);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_db.p_module_list_array[p_tmp_hash].p_name,
-                                    (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_mod,
-                                    (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_module_core,
-                                    p_db.p_module_list_array[p_tmp_hash].p_core_text_size,
-                                    p_db.p_module_list_array[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                    (p_tmp_mod->state == 1) ? "COMING" :
-                                    (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                    (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                           } else {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in current system in module list [%d] than in DB module list[%d]\n",
-                                    p_tmp_diff,
-                                    p_module_list_nr_tmp,
-                                    p_db.p_module_list_nr);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_db.p_module_list_array[p_tmp_hash].p_name,
-                                    (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_mod,
-                                    (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_module_core,
-                                    p_db.p_module_list_array[p_tmp_hash].p_core_text_size,
-                                    p_db.p_module_list_array[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                    "identified through the official API. Most likely race condition appeared when system "
-                                    "was rebuilding database (system is stable).\n");
-
-                              // TODO: Dirty dump module - from the memory scratches if possible
-                           }
+                           P_PRINT_LIVE_OR_NOT
                         } else {
-                           p_print_log(P_LKRG_WARN,
-                                 "Found less[%d] modules in current system in module list [%d] than in DB module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_list_nr_tmp,
-                                 p_db.p_module_list_nr);
-                           p_print_log(P_LKRG_WARN,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_db.p_module_list_array[p_tmp_hash].p_name,
-                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_mod,
-                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_module_core,
-                                 p_db.p_module_list_array[p_tmp_hash].p_core_text_size,
-                                 p_db.p_module_list_array[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_WARN,
-                                  "Strange behaviour detected - module was found in DB but not in OS (system is stable).\n");
-
-                           // Did NOT find it in the system via official API...
-                           // TODO: Dirty dump module - from the memory scratches if possible
+#define P_PRINT_NOT_IN_OS \
+                           p_print_log(P_LOG_WATCH, "Module was found in DB but not in OS (system is stable)"); \
+                           /* Did NOT find it in the system via official API... */
+                           P_PRINT_NOT_IN_OS
                         }
                      }
                   } else {
                      p_tmp_mod = P_SYM(p_find_module(p_db.p_module_list_array[p_tmp_hash].p_name));
                      if (p_tmp_mod) {
-                        if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in current system in module list [%d] than in DB module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_list_nr_tmp,
-                                 p_db.p_module_list_nr);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_db.p_module_list_array[p_tmp_hash].p_name,
-                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_mod,
-                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_module_core,
-                                 p_db.p_module_list_array[p_tmp_hash].p_core_text_size,
-                                 p_db.p_module_list_array[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                 (p_tmp_mod->state == 1) ? "COMING" :
-                                 (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                 (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                        } else {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in current system in module list [%d] than in DB module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_list_nr_tmp,
-                                 p_db.p_module_list_nr);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_db.p_module_list_array[p_tmp_hash].p_name,
-                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_mod,
-                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_module_core,
-                                 p_db.p_module_list_array[p_tmp_hash].p_core_text_size,
-                                 p_db.p_module_list_array[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                 "identified through the official API. Most likely race condition appeared when system "
-                                 "was rebuilding database (system is stable).\n");
-                           // TODO: Dirty dump module - from the memory scratches if possible
-                        }
+                        P_PRINT_LIVE_OR_NOT
                      } else {
-                           p_print_log(P_LKRG_WARN,
-                                 "Found less[%d] modules in current system in module list [%d] than in DB module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_module_list_nr_tmp,
-                                 p_db.p_module_list_nr);
-                           p_print_log(P_LKRG_WARN,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_db.p_module_list_array[p_tmp_hash].p_name,
-                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_mod,
-                                 (unsigned long)p_db.p_module_list_array[p_tmp_hash].p_module_core,
-                                 p_db.p_module_list_array[p_tmp_hash].p_core_text_size,
-                                 p_db.p_module_list_array[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_WARN,
-                                  "Strange behaviour detected - module was found in DB but not in OS (system is stable).\n");
-
-                           // Did NOT find it in the system via official API...
-                           // TODO: Dirty dump module - from the memory scratches if possible
+                        P_PRINT_NOT_IN_OS
                      }
                   }
                }
             }
          }
-         /* We should never be here... we found more mismatched modules than expected */
-         if (p_tmp_diff != p_tmp_flag_cnt) {
-            p_print_log(P_LKRG_ERR,
-               "We found more[%d] missing modules than expected[%d]... something went wrong ;(\n",
-               p_tmp_flag_cnt,p_tmp_diff);
-         }
+         P_PRINT_FOUND_MORE
       } else if (p_db.p_module_list_nr < p_module_list_nr_tmp) {
          /*
           * This is weird situation as well. Notifier should inform us
@@ -1053,186 +668,36 @@ void p_check_integrity(struct work_struct *p_work) {
 
                // TODO: Dump module
 
+               P_PRINT_WATCH_FEWER("Extra",
+                  p_db.p_module_list_nr, "DB module list",
+                  p_module_list_nr_tmp, p_module_list_tmp, "current module list")
+
                if (!P_CTRL(p_block_modules)) {
                   /* Maybe we have sleeping module activity event ? */
                   if (mutex_is_locked(&p_module_activity)) {
                      // STRONG_DEBUG
-                     p_debug_log(P_LKRG_STRONG_DBG,
-                                "Extra[0x%lx] p_module_activity_ptr[0x%lx]\n",
+                     p_debug_log(P_LOG_FLOOD,
+                                "Extra[0x%lx] p_module_activity_ptr[0x%lx]",
                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
                                 (unsigned long)p_module_activity_ptr);
                      if (p_module_list_tmp[p_tmp_hash].p_mod == p_module_activity_ptr) {
-                        p_print_log(P_LKRG_INFO,
-                              "Found less[%d] modules in DB module list [%d] than in current module list[%d]\n",
-                              p_tmp_diff,
-                              p_db.p_module_list_nr,
-                              p_module_list_nr_tmp);
-                        p_print_log(P_LKRG_INFO,
-                              "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_module_list_tmp[p_tmp_hash].p_name,
-                              (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                              (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                              p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                              p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                        p_print_log(P_LKRG_INFO,
-                                    "Extra module is the same as on-going module activity events (system is stable).\n");
+                        P_PRINT_ONGOING("Extra")
                      } else {
                         p_tmp_mod = P_SYM(p_find_module(p_module_list_tmp[p_tmp_hash].p_name));
                         if (p_tmp_mod) {
-                           if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in DB module list [%d] than in current module list[%d]\n",
-                                    p_tmp_diff,
-                                    p_db.p_module_list_nr,
-                                    p_module_list_nr_tmp);
-                              p_print_log(P_LKRG_INFO,
-                                    "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_module_list_tmp[p_tmp_hash].p_name,
-                                    (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                    (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                    p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                    p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Extra module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                    (p_tmp_mod->state == 1) ? "COMING" :
-                                    (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                    (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                           } else {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in DB module list [%d] than in current module list[%d]\n",
-                                    p_tmp_diff,
-                                    p_db.p_module_list_nr,
-                                    p_module_list_nr_tmp);
-                              p_print_log(P_LKRG_INFO,
-                                    "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_module_list_tmp[p_tmp_hash].p_name,
-                                    (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                    (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                    p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                    p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Extra module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                    "identified through the official API. Most likely race condition appeared when system "
-                                    "was rebuilding database (system is stable).\n");
-
-                              // TODO: Dump module
-                           }
-                        } else {
-                           p_print_log(P_LKRG_CRIT,
-                                 "ALERT !!! FOUND LESS[%d] MODULES IN DB IN MODULE LIST[%d] THAN IN CURRENT MODULE LIST[%d]\n",
-                                 p_tmp_diff,
-                                 p_db.p_module_list_nr,
-                                 p_module_list_nr_tmp);
-                           /* Let's dump information about 'hidden' module */
-                           p_print_log(P_LKRG_CRIT,
-                              "EXTRA MODULE:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_module_list_tmp[p_tmp_hash].p_name,
-                              (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                              (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                              p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                              p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_CRIT,
-                                  "!! MOST LIKELY SYSTEM IS HACKED - MODULE WILL BE DUMPED !! **\n");
-
-                           // Did NOT find it in the system via official API...
-                           // MOST LIKELY WE ARE HACKED!
-                           // TODO: Dump module
+                           P_PRINT_LIVE_OR_NOT
                         }
                      }
                   } else {
                      p_tmp_mod = P_SYM(p_find_module(p_module_list_tmp[p_tmp_hash].p_name));
                      if (p_tmp_mod) {
-                        if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in DB module list [%d] than in current module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_db.p_module_list_nr,
-                                 p_module_list_nr_tmp);
-                           p_print_log(P_LKRG_INFO,
-                                 "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_list_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                 p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Extra module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                 (p_tmp_mod->state == 1) ? "COMING" :
-                                 (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                 (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                        } else {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in DB module list [%d] than in current module list[%d]\n",
-                                 p_tmp_diff,
-                                 p_db.p_module_list_nr,
-                                 p_module_list_nr_tmp);
-                           p_print_log(P_LKRG_INFO,
-                                 "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_list_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                                 p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Extra module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                 "identified through the official API. Most likely race condition appeared when system "
-                                 "was rebuilding database (system is stable).\n");
-                           // TODO: Dump module
-                        }
-                     } else {
-                        p_print_log(P_LKRG_CRIT,
-                              "ALERT !!! FOUND LESS[%d] MODULES IN DB IN MODULE LIST[%d] THAN IN CURRENT MODULE LIST[%d]\n",
-                              p_tmp_diff,
-                              p_db.p_module_list_nr,
-                              p_module_list_nr_tmp);
-                        /* Let's dump information about 'hidden' module */
-                        p_print_log(P_LKRG_CRIT,
-                           "EXTRA MODULE:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                           p_module_list_tmp[p_tmp_hash].p_name,
-                           (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                           (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                           p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                           p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-
-                        // Did NOT find it in the system via official API...
-                        // MOST LIKELY WE ARE HACKED!
-                        // TODO: Dump module
+                        P_PRINT_LIVE_OR_NOT
                      }
                   }
-               } else {
-                 p_print_log(P_LKRG_CRIT,
-                       "ALERT !!! FOUND LESS[%d] MODULES IN DB IN MODULE LIST[%d] THAN IN CURRENT MODULE LIST[%d]\n",
-                       p_tmp_diff,
-                       p_db.p_module_list_nr,
-                       p_module_list_nr_tmp);
-                /* Let's dump information about 'hidden' module */
-                p_print_log(P_LKRG_CRIT,
-                      "EXTRA MODULE:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                      p_module_list_tmp[p_tmp_hash].p_name,
-                      (unsigned long)p_module_list_tmp[p_tmp_hash].p_mod,
-                      (unsigned long)p_module_list_tmp[p_tmp_hash].p_module_core,
-                      p_module_list_tmp[p_tmp_hash].p_core_text_size,
-                      p_module_list_tmp[p_tmp_hash].p_mod_core_text_hash);
-                  p_print_log(P_LKRG_CRIT,
-                         "!! MOST LIKELY SYSTEM IS HACKED - MODULE WILL BE DUMPED !! **\n");
-
-                  // Dynamic module blocking is disabled so this situation shouldn't happen
-                  // MOST LIKELY WE ARE HACKED!
-                  // TODO: Dump module
                }
             }
          }
-
-         /* We should never be here... we found more mismatched modules than expected */
-         if (p_tmp_diff != p_tmp_flag_cnt) {
-            p_print_log(P_LKRG_ERR,
-               "We found more[%d] missing modules than expected[%d]... something went wrong ;(\n",
-               p_tmp_flag_cnt,p_tmp_diff);
-         }
-      } else {
-         p_print_log(P_LKRG_CRIT,
-                "I should never be here!... something went wrong ;( module list[%d] DB module list[%d]\n",
-                p_module_list_nr_tmp,p_db.p_module_list_nr);
+         P_PRINT_FOUND_MORE
       }
    }
 
@@ -1282,161 +747,43 @@ void p_check_integrity(struct work_struct *p_work) {
                p_tmp_flag_cnt++;
 
                // TODO: Module disappeared and we didn't notice it! We shouldn't dump it because
-               // most likely module doesn't exists anymore...
+               // most likely module doesn't exist anymore...
                // But we can try to poke that page where modules used to be to find out scratches
                // of information about it (e.g. name? symbols table?)
 
                if (!P_CTRL(p_block_modules)) {
+                  P_PRINT_WATCH_FEWER("Lost",
+                     p_module_kobj_nr_tmp, "current KOBJ",
+                     p_db.p_module_kobj_nr, p_db.p_module_kobj_array, "DB KOBJ")
                   /* Maybe we have sleeping module activity event ? */
                   if (mutex_is_locked(&p_module_activity)) {
                      // STRONG_DEBUG
-                     p_debug_log(P_LKRG_STRONG_DBG,
-                                "Lost[0x%lx] p_module_activity_ptr[0x%lx]\n",
+                     p_debug_log(P_LOG_FLOOD,
+                                "Lost[0x%lx] p_module_activity_ptr[0x%lx]",
                                 (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_mod,
                                 (unsigned long)p_module_activity_ptr);
                      if (p_db.p_module_kobj_array[p_tmp_hash].p_mod == p_module_activity_ptr) {
-                        p_print_log(P_LKRG_INFO,
-                              "Found less[%d] modules in current system in KOBJ [%d] than in DB KOBJ[%d]\n",
-                               p_tmp_diff,
-                               p_module_kobj_nr_tmp,
-                               p_db.p_module_kobj_nr);
-                        p_print_log(P_LKRG_INFO,
-                              "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_db.p_module_kobj_array[p_tmp_hash].p_name,
-                              (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_mod,
-                              (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_module_core,
-                              p_db.p_module_kobj_array[p_tmp_hash].p_core_text_size,
-                              p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash);
-                        p_print_log(P_LKRG_INFO,
-                                    "Lost module is the same as on-going module activity events (system is stable).\n");
+                        P_PRINT_ONGOING("Lost")
                      } else {
                         p_tmp_mod = P_SYM(p_find_module(p_db.p_module_kobj_array[p_tmp_hash].p_name));
                         if (p_tmp_mod) {
-                           if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in current system in KOBJ [%d] than in DB KOBJ[%d]\n",
-                                     p_tmp_diff,
-                                     p_module_kobj_nr_tmp,
-                                     p_db.p_module_kobj_nr);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_db.p_module_kobj_array[p_tmp_hash].p_name,
-                                    (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_mod,
-                                    (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_module_core,
-                                    p_db.p_module_kobj_array[p_tmp_hash].p_core_text_size,
-                                    p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                    (p_tmp_mod->state == 1) ? "COMING" :
-                                    (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                    (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                           } else {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in current system in KOBJ [%d] than in DB KOBJ[%d]\n",
-                                     p_tmp_diff,
-                                     p_module_kobj_nr_tmp,
-                                     p_db.p_module_kobj_nr);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_db.p_module_kobj_array[p_tmp_hash].p_name,
-                                    (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_mod,
-                                    (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_module_core,
-                                    p_db.p_module_kobj_array[p_tmp_hash].p_core_text_size,
-                                    p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                    "identified through the official API. Most likely race condition appeared when system "
-                                    "was rebuilding database (system is stable).\n");
-
-                              // TODO: Dirty dump module - from the memory scratches if possible
-                           }
+                           P_PRINT_LIVE_OR_NOT
                         } else {
-                           p_print_log(P_LKRG_WARN,
-                                 "Found less[%d] modules in current system in KOBJ [%d] than in DB KOBJ[%d]\n",
-                                  p_tmp_diff,
-                                  p_module_kobj_nr_tmp,
-                                  p_db.p_module_kobj_nr);
-                           p_print_log(P_LKRG_WARN,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_name,
-                                 (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_mod,
-                                 (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_module_core,
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_core_text_size,
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_WARN,
-                                  "Strange behaviour detected - module was found in DB but not in OS (system is stable).\n");
-                           // Did NOT find it in the system via official API...
-                           // TODO: Dirty dump module - from the memory scratches if possible
+                           P_PRINT_NOT_IN_OS
                         }
                      }
                   } else {
                      p_tmp_mod = P_SYM(p_find_module(p_db.p_module_kobj_array[p_tmp_hash].p_name));
                      if (p_tmp_mod) {
-                        if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in current system in KOBJ [%d] than in DB KOBJ[%d]\n",
-                                  p_tmp_diff,
-                                  p_module_kobj_nr_tmp,
-                                  p_db.p_module_kobj_nr);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_name,
-                                 (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_mod,
-                                 (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_module_core,
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_core_text_size,
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                 (p_tmp_mod->state == 1) ? "COMING" :
-                                 (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                 (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                        } else {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in current system in KOBJ [%d] than in DB KOBJ[%d]\n",
-                                  p_tmp_diff,
-                                  p_module_kobj_nr_tmp,
-                                  p_db.p_module_kobj_nr);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_name,
-                                 (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_mod,
-                                 (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_module_core,
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_core_text_size,
-                                 p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Lost module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                 "identified through the official API. Most likely race condition appeared when system "
-                                 "was rebuilding database (system is stable).\n");
-                           // TODO: Dirty dump module - from the memory scratches if possible
-                        }
+                        P_PRINT_LIVE_OR_NOT
                      } else {
-                        p_print_log(P_LKRG_WARN,
-                              "Found less[%d] modules in current system in KOBJ [%d] than in DB KOBJ[%d]\n",
-                               p_tmp_diff,
-                               p_module_kobj_nr_tmp,
-                               p_db.p_module_kobj_nr);
-                        p_print_log(P_LKRG_WARN,
-                              "Lost module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_db.p_module_kobj_array[p_tmp_hash].p_name,
-                              (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_mod,
-                              (unsigned long)p_db.p_module_kobj_array[p_tmp_hash].p_module_core,
-                              p_db.p_module_kobj_array[p_tmp_hash].p_core_text_size,
-                              p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash);
-                        p_print_log(P_LKRG_WARN,
-                               "Strange behaviour detected - module was found in DB but not in OS (system is stable).\n");
-                        // Did NOT find it in the system via official API...
-                        // TODO: Dirty dump module - from the memory scratches if possible
+                        P_PRINT_NOT_IN_OS
                      }
                   }
                }
             }
          }
-         /* We should never be here... we found more mismatched modules than expected */
-         if (p_tmp_diff != p_tmp_flag_cnt) {
-            p_print_log(P_LKRG_ERR,
-               "We found more[%d] missing modules than expected[%d]... something went wrong ;(\n",
-               p_tmp_flag_cnt,p_tmp_diff);
-         }
+         P_PRINT_FOUND_MORE
       } else if (p_db.p_module_kobj_nr < p_module_kobj_nr_tmp) {
          /*
           * This is weird situation as well. Notifier should inform us
@@ -1470,184 +817,49 @@ void p_check_integrity(struct work_struct *p_work) {
                // TODO: Dump module
 
                if (!P_CTRL(p_block_modules)) {
+                  P_PRINT_WATCH_FEWER("Extra",
+                     p_db.p_module_kobj_nr, "DB KOBJ",
+                     p_module_kobj_nr_tmp, p_module_kobj_tmp, "current KOBJ")
                   /* Maybe we have sleeping module activity event ? */
                   if (mutex_is_locked(&p_module_activity)) {
                      // STRONG_DEBUG
-                     p_debug_log(P_LKRG_STRONG_DBG,
-                                "Extra[0x%lx] p_module_activity_ptr[0x%lx]\n",
+                     p_debug_log(P_LOG_FLOOD,
+                                "Extra[0x%lx] p_module_activity_ptr[0x%lx]",
                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
                                 (unsigned long)p_module_activity_ptr);
                      if (p_module_kobj_tmp[p_tmp_hash].p_mod == p_module_activity_ptr) {
-                        p_print_log(P_LKRG_INFO,
-                              "Found less[%d] modules in DB in KOBJ [%d] than in current KOBJ[%d]\n",
-                              p_tmp_diff,
-                              p_db.p_module_kobj_nr,
-                              p_module_kobj_nr_tmp);
-                        p_print_log(P_LKRG_INFO,
-                              "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_module_kobj_tmp[p_tmp_hash].p_name,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                              p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                              p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                        p_print_log(P_LKRG_INFO,
-                                    "Extra module is the same as on-going module activity events (system is stable).\n");
+                        P_PRINT_ONGOING("Extra")
                      } else {
                         p_tmp_mod = P_SYM(p_find_module(p_module_kobj_tmp[p_tmp_hash].p_name));
                         if (p_tmp_mod) {
-                           if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in DB in KOBJ [%d] than in current KOBJ[%d]\n",
-                                    p_tmp_diff,
-                                    p_db.p_module_kobj_nr,
-                                    p_module_kobj_nr_tmp);
-                              p_print_log(P_LKRG_INFO,
-                                    "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_module_kobj_tmp[p_tmp_hash].p_name,
-                                    (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                    (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                    p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                    p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Extra module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                    (p_tmp_mod->state == 1) ? "COMING" :
-                                    (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                    (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                           } else {
-                              p_print_log(P_LKRG_INFO,
-                                    "Found less[%d] modules in DB in KOBJ [%d] than in current KOBJ[%d]\n",
-                                    p_tmp_diff,
-                                    p_db.p_module_kobj_nr,
-                                    p_module_kobj_nr_tmp);
-                              p_print_log(P_LKRG_INFO,
-                                    "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                    p_module_kobj_tmp[p_tmp_hash].p_name,
-                                    (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                    (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                    p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                    p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                              p_print_log(P_LKRG_INFO,
-                                    "Extra module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                    "identified through the official API. Most likely race condition appeared when system "
-                                    "was rebuilding database (system is stable).\n");
-
-                              // TODO: Dump module
-                           }
+                           P_PRINT_LIVE_OR_NOT
                         } else {
-                           p_print_log(P_LKRG_WARN,
-                                 "Found less[%d] modules in DB in KOBJ [%d] than in current KOBJ[%d]\n",
-                                 p_tmp_diff,
-                                 p_db.p_module_kobj_nr,
-                                 p_module_kobj_nr_tmp);
-                           p_print_log(P_LKRG_WARN,
-                                 "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_kobj_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                 p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_WARN,
-                                  "Strange behaviour detected - module was found in DB KOBJs but not in OS (system is stable).\n");
-                           // Did NOT find it in the system via official API...
-                           // MOST LIKELY WE ARE NOT HACKED :)
-                           // TODO: Dump module
+#define P_PRINT_IN_DB_KOBJ \
+                           p_print_log(P_LOG_WATCH, "Module was found in DB KOBJs but not in OS (system is stable)"); \
+                           /* Did NOT find it in the system via official API... MOST LIKELY WE ARE NOT HACKED :) */
+                           P_PRINT_IN_DB_KOBJ
                         }
                      }
                   } else {
                      p_tmp_mod = P_SYM(p_find_module(p_module_kobj_tmp[p_tmp_hash].p_name));
                      if (p_tmp_mod) {
-                        if (p_tmp_mod->state != MODULE_STATE_LIVE) {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in DB in KOBJ [%d] than in current KOBJ[%d]\n",
-                                 p_tmp_diff,
-                                 p_db.p_module_kobj_nr,
-                                 p_module_kobj_nr_tmp);
-                           p_print_log(P_LKRG_INFO,
-                                 "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_kobj_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                 p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Extra module is not in the 'LIVE' state but in [%s] state (system is stable).\n",
-                                 (p_tmp_mod->state == 1) ? "COMING" :
-                                 (p_tmp_mod->state == 2) ? "GOING AWAY" :
-                                 (p_tmp_mod->state == 3) ? "COMING" : "UNKNOWN!");
-                        } else {
-                           p_print_log(P_LKRG_INFO,
-                                 "Found less[%d] modules in DB in KOBJ [%d] than in current KOBJ[%d]\n",
-                                 p_tmp_diff,
-                                 p_db.p_module_kobj_nr,
-                                 p_module_kobj_nr_tmp);
-                           p_print_log(P_LKRG_INFO,
-                                 "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                                 p_module_kobj_tmp[p_tmp_hash].p_name,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                                 (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                                 p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                                 p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                           p_print_log(P_LKRG_INFO,
-                                 "Extra module has 'live' state but 'block_modules' is disabled. Module was correctly "
-                                 "identified through the official API. Most likely race condition appeared when system "
-                                 "was rebuilding database (system is stable).\n");
-                           // TODO: Dump module
-                        }
+                        P_PRINT_LIVE_OR_NOT
                      } else {
-                        p_print_log(P_LKRG_WARN,
-                              "Found less[%d] modules in DB in KOBJ [%d] than in current KOBJ[%d]\n",
-                              p_tmp_diff,
-                              p_db.p_module_kobj_nr,
-                              p_module_kobj_nr_tmp);
-                        p_print_log(P_LKRG_WARN,
-                              "Extra module:\nname[%s] module at addr[0x%lx] module core[0x%lx] with size[0x%x] hash[0x%llx]\n",
-                              p_module_kobj_tmp[p_tmp_hash].p_name,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_mod,
-                              (unsigned long)p_module_kobj_tmp[p_tmp_hash].p_module_core,
-                              p_module_kobj_tmp[p_tmp_hash].p_core_text_size,
-                              p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash);
-                        p_print_log(P_LKRG_WARN,
-                               "Strange behaviour detected - module was found in DB KOBJs but not in OS (system is stable).\n");
-
-                        // Did NOT find it in the system via official API...
-                        // MOST LIKELY WE ARE NOT HACKED :)
-                        // TODO: Dump module
+                        P_PRINT_IN_DB_KOBJ
                      }
                   }
                }
             }
          }
-         /* We should never be here... we found more mismatched modules than expected */
-         if (p_tmp_diff != p_tmp_flag_cnt) {
-            p_print_log(P_LKRG_ERR,
-               "We found more[%d] missing modules than expected[%d]... something went wrong ;(\n",
-               p_tmp_flag_cnt,p_tmp_diff);
-         }
-      } else {
-         p_print_log(P_LKRG_CRIT,
-                "I should never be here!... something went wrong ;( module list[%d] DB module list[%d]\n",
-                p_module_list_nr_tmp,p_db.p_module_list_nr);
+         P_PRINT_FOUND_MORE
       }
    }
-
-
-/*   if ( (p_module_list_nr_tmp != p_module_kobj_nr_tmp) || (p_module_list_nr_tmp != p_db.p_module_list_nr)
-        || (p_module_kobj_nr_tmp != p_db.p_module_kobj_nr) ) {
-      printk(P_LKRG_PRINT P_LKRG_SIGNATURE
-             "ALERT !!! MODULE NUMBERS ARE INCONSISTENT! IN DB: LIST[%d] KOBJ[%d], found LIST[%d], KOBJ[%d]\n",
-             p_db.p_module_list_nr,p_db.p_module_kobj_nr,p_module_list_nr_tmp,p_module_kobj_nr_tmp);
-      p_hack_check++;
-
-      // TODO: Find missing module and DUMP as much info as possible about that!
-
-   }
-*/
 
 
    p_tmp_hash = p_lkrg_fast_hash((unsigned char *)p_module_list_tmp,
                                  (unsigned int)p_module_list_nr_tmp * sizeof(p_module_list_mem));
 
-   p_print_log(P_LKRG_INFO,"Hash from 'module list' => [0x%llx]\n",p_tmp_hash);
+   p_print_log(P_LOG_WATCH, "Hash from 'module list' => [0x%llx]", p_tmp_hash);
 
    if (p_tmp_hash != p_db.p_module_list_hash) {
       unsigned int p_tmp_cnt,p_local_hack_check = 0;
@@ -1657,29 +869,20 @@ void p_check_integrity(struct work_struct *p_work) {
             if (p_db.p_module_list_array[p_tmp].p_mod == p_module_list_tmp[p_tmp_cnt].p_mod) {
                if (p_db.p_module_list_array[p_tmp].p_mod_core_text_hash != p_module_list_tmp[p_tmp_cnt].p_mod_core_text_hash) {
                   /* I'm hacked! ;( */
-                  p_print_log(P_LKRG_CRIT,
-                              "ALERT !!! MODULE'S <%s> HASH IS DIFFERENT it is [0x%llx] and should be [0x%llx] !!!\n",
-                              p_module_list_tmp[p_tmp_cnt].p_name,
-                              p_module_list_tmp[p_tmp_cnt].p_mod_core_text_hash,
-                              p_db.p_module_list_array[p_tmp_cnt].p_mod_core_text_hash);
+                  p_print_log(P_LOG_ALERT, "DETECT: Kernel: Module hash changed unexpectedly, name %s",
+                     p_module_list_tmp[p_tmp_cnt].p_name);
+                  p_print_log(P_LOG_WATCH, "Module hash expected 0x%llx vs. actual 0x%llx, name %s",
+                     p_db.p_module_list_array[p_tmp_cnt].p_mod_core_text_hash,
+                     p_module_list_tmp[p_tmp_cnt].p_mod_core_text_hash,
+                     p_module_list_tmp[p_tmp_cnt].p_name);
                   P_KINT_IF_ACCEPT(p_db.p_module_list_array[p_tmp_cnt].p_mod_core_text_hash,
-                                   p_module_list_tmp[p_tmp_cnt].p_mod_core_text_hash,
-                                   p_hack_check);
+                                   p_module_list_tmp[p_tmp_cnt].p_mod_core_text_hash)
                   p_local_hack_check++;
                }
             }
          }
       }
-/*
-      if (!p_local_hack_check) {
-         p_db.p_module_list_hash = p_lkrg_fast_hash((unsigned char *)p_db.p_module_list_array,
-                                                    (unsigned int)p_db.p_module_list_nr * sizeof(p_module_list_mem));
 
-         if (p_tmp_hash != p_db.p_module_list_hash) {
-            p_local_hack_check = 1;
-         }
-      }
-*/
       /*
        * OK, we know hash will be different if there is inconsistency in the number
        * of tracked / discovered modules in module list and/or in sysfs (KOBJs)
@@ -1689,15 +892,15 @@ void p_check_integrity(struct work_struct *p_work) {
 
             /* Maybe we have sleeping module activity event ? */
             if (mutex_is_locked(&p_module_activity)) {
-                  P_KINT_HACK_D(p_hack_check);
-                  p_print_log(P_LKRG_INFO,
-                              "Unhandled on-going module activity events detected. "
-                              "Activity changed module list consistency (system is stable).\n");
+               p_hack_check -= p_local_hack_check; /* FIXME: should also have avoided the alert(s) above */
+               p_print_log(P_LOG_WATCH,
+                  "Unhandled on-going module activity events detected. "
+                  "Activity changed module list consistency (system is stable).");
             } else {
-               p_print_log(P_LKRG_CRIT,
-                      "ALERT !!! MODULE LIST HASH IS DIFFERENT !!! - it is [0x%llx] and should be [0x%llx] !!!\n",
-                                                                             p_tmp_hash,p_db.p_module_list_hash);
-               P_KINT_HACK_I(p_hack_check);
+               p_print_log(P_LOG_ALERT, "DETECT: Kernel: Module list hash changed unexpectedly");
+               p_print_log(P_LOG_WATCH, "Module list hash expected 0x%llx vs. actual 0x%llx",
+                  p_db.p_module_list_hash, p_tmp_hash);
+               p_hack_check++;
             }
          }
       }
@@ -1707,7 +910,7 @@ void p_check_integrity(struct work_struct *p_work) {
    p_tmp_hash = p_lkrg_fast_hash((unsigned char *)p_module_kobj_tmp,
                                  (unsigned int)p_module_kobj_nr_tmp * sizeof(p_module_kobj_mem));
 
-   p_print_log(P_LKRG_INFO,"Hash from 'module kobj(s)' => [0x%llx]\n",p_tmp_hash);
+   p_print_log(P_LOG_WATCH, "Hash from 'module kobj(s)' => [0x%llx]", p_tmp_hash);
 
    if (p_tmp_hash != p_db.p_module_kobj_hash) {
 
@@ -1718,14 +921,14 @@ void p_check_integrity(struct work_struct *p_work) {
       if (!p_mod_bad_nr) {
          /* Maybe we have sleeping module activity event ? */
          if (mutex_is_locked(&p_module_activity)) {
-               p_print_log(P_LKRG_INFO,
-                           "Unhandled on-going module activity events detected. "
-                           "Activity changed KOBJs consistency (system is stable).\n");
+            p_print_log(P_LOG_WATCH,
+               "Unhandled on-going module activity events detected. "
+               "Activity changed KOBJs consistency (system is stable).");
          } else {
-            p_print_log(P_LKRG_CRIT,
-                   "ALERT !!! MODULE KOBJ HASH IS DIFFERENT !!! - it is [0x%llx] and should be [0x%llx] !!!\n",
-                                                                          p_tmp_hash,p_db.p_module_kobj_hash);
-            P_KINT_HACK_I(p_hack_check);
+            p_print_log(P_LOG_ALERT, "DETECT: Kernel: Module KOBJ list hash changed unexpectedly");
+            p_print_log(P_LOG_WATCH, "Module KOBJ list hash expected 0x%llx vs. actual 0x%llx",
+               p_db.p_module_kobj_hash, p_tmp_hash);
+            p_hack_check++;
          }
       }
 
@@ -1734,28 +937,28 @@ void p_check_integrity(struct work_struct *p_work) {
          for (p_tmp_cnt = 0; p_tmp_cnt < p_module_kobj_nr_tmp; p_tmp_cnt++) {
             if (p_db.p_module_kobj_array[p_tmp_hash].p_mod == p_module_kobj_tmp[p_tmp_cnt].p_mod)
                if (p_db.p_module_kobj_array[p_tmp_hash].p_mod_core_text_hash != p_module_kobj_tmp[p_tmp_cnt].p_mod_core_text_hash) {
-                  p_print_log(P_LKRG_CRIT,
-                         "[KOBJ] ALERT !!! MODULE'S <%s> HASH IS DIFFERENT it is [0x%llx] and should be [0x%llx] !!!\n",
-                          p_module_kobj_tmp[p_tmp_hash].p_name,
-                          p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash,
-                          p_db.p_module_kobj_array[p_tmp_cnt].p_mod_core_text_hash);
+
+                  p_print_log(P_LOG_ALERT, "DETECT: Kernel: Module KOBJ hash changed unexpectedly, name %s",
+                     p_module_kobj_tmp[p_tmp_hash].p_name);
+                  p_print_log(P_LOG_WATCH, "Module KOBJ hash expected 0x%llx vs. actual 0x%llx, name %s",
+                     p_db.p_module_kobj_array[p_tmp_cnt].p_mod_core_text_hash,
+                     p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash,
+                     p_module_kobj_tmp[p_tmp_hash].p_name);
                   P_KINT_IF_ACCEPT(p_db.p_module_kobj_array[p_tmp_cnt].p_mod_core_text_hash,
-                                   p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash,
-                                   p_hack_check);
+                                   p_module_kobj_tmp[p_tmp_hash].p_mod_core_text_hash)
                }
          }
       }
    }
 
    if (p_hack_check) {
-      p_print_log(P_LKRG_CRIT,
-             "ALERT !!! SYSTEM HAS BEEN COMPROMISED - DETECTED DIFFERENT %u CHECKSUMS !!!\n",p_hack_check);
-      if (P_CTRL(p_kint_enforce == 2)) {
+      p_print_log(P_LOG_ALERT, "DETECT: Kernel: %u checksums changed unexpectedly", p_hack_check);
+      if (P_CTRL(p_kint_enforce >= 2)) {
          // OK, we need to crash the kernel now
-         panic(P_LKRG_SIGNATURE "Kernel Integrity verification failed! Killing the kernel...\n");
+         p_panic("Kernel: %u checksums changed unexpectedly", p_hack_check);
       }
    } else if (P_CTRL(p_heartbeat)) {
-      p_print_log(P_LKRG_ALIVE,"System is clean!\n");
+      p_print_log(P_LOG_ALIVE, "System is clean");
    }
 
    if (p_module_list_tmp) {
@@ -1784,7 +987,7 @@ p_check_integrity_tasks:
    if (!p_ed_enforce_validation_paranoid()) {
       if (P_CTRL(p_heartbeat) && P_CTRL(p_pint_validate) &&
           (!P_CTRL(p_kint_validate) || (!p_manual && P_CTRL(p_kint_validate) == 1))) {
-         p_print_log(P_LKRG_ALIVE,"Tasks are clean!\n");
+         p_print_log(P_LOG_ALIVE, "Tasks are clean");
       }
    }
 

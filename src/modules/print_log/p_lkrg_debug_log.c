@@ -123,7 +123,9 @@ static struct p_addr_name {
    P_LKRG_DEBUG_RULE_KPROBE(p_sys_setfsgid),
    P_LKRG_DEBUG_RULE_KPROBE(p_call_usermodehelper_exec),
    P_LKRG_DEBUG_RULE_KPROBE(p_set_current_groups),
-   P_LKRG_DEBUG_RULE_KPROBE(p_ovl_create_or_link),
+#if P_OVL_OVERRIDE_SYNC_MODE
+   P_LKRG_DEBUG_RULE_KPROBE(p_ovl_override_sync),
+#endif
    P_LKRG_DEBUG_RULE_KPROBE(p_revert_creds),
    P_LKRG_DEBUG_RULE_KPROBE(p_override_creds),
    P_LKRG_DEBUG_RULE_KPROBE(p_security_bprm_committing_creds),
@@ -172,8 +174,8 @@ void __cyg_profile_func_enter(void *func, void *caller) {
 
    for (it = p_addr_name_array; it->name != NULL; it++) {
       if (it->addr == (uintptr_t)func) {
-         p_debug_log(P_LKRG_STRONG_DBG,
-            "Entering function <%s>\n", it->name);
+         p_debug_log(P_LOG_FLOOD,
+            "Entering function <%s>", it->name);
          break;
       }
    }
@@ -185,8 +187,8 @@ void __cyg_profile_func_exit(void *func, void *caller) {
 
    for (it = p_addr_name_array; it->name != NULL; it++) {
       if (it->addr == (uintptr_t)func) {
-         p_debug_log(P_LKRG_STRONG_DBG,
-            "Leaving function <%s>\n", it->name);
+         p_debug_log(P_LOG_FLOOD,
+            "Leaving function <%s>", it->name);
 		   break;
       }
    }

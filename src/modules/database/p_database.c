@@ -35,8 +35,8 @@ int hash_from_ex_table(void) {
    p_db.kernel_ex_table.p_hash = p_lkrg_fast_hash((unsigned char *)p_db.kernel_ex_table.p_addr,
                                                   (unsigned int)p_db.kernel_ex_table.p_size);
 
-   p_debug_log(P_LKRG_DBG,
-          "hash [0x%llx] ___ex_table start [0x%lx] size [0x%lx]\n",p_db.kernel_ex_table.p_hash,
+   p_debug_log(P_LOG_DEBUG,
+          "hash [0x%llx] ___ex_table start [0x%lx] size [0x%lx]",p_db.kernel_ex_table.p_hash,
                                                                    (long)p_db.kernel_ex_table.p_addr,
                                                                    (long)p_db.kernel_ex_table.p_size);
 
@@ -65,8 +65,7 @@ int hash_from_kernel_stext(void) {
          /*
           * I should NEVER be here!
           */
-         p_print_log(P_LKRG_CRIT,
-                "CREATING DATABASE: kzalloc() error! Can't allocate memory - copy stext ;[\n");
+         p_print_log(P_LOG_FATAL, "Can't allocate memory for _stext copy");
          return P_LKRG_GENERAL_ERROR;
       }
    }
@@ -74,8 +73,8 @@ int hash_from_kernel_stext(void) {
    p_db.kernel_stext_copy[p_db.kernel_stext.p_size] = 0;
 #endif
 
-   p_debug_log(P_LKRG_DBG,
-          "hash [0x%llx] _stext start [0x%lx] size [0x%lx]\n",p_db.kernel_stext.p_hash,
+   p_debug_log(P_LOG_DEBUG,
+          "hash [0x%llx] _stext start [0x%lx] size [0x%lx]",p_db.kernel_stext.p_hash,
                                                               (long)p_db.kernel_stext.p_addr,
                                                               (long)p_db.kernel_stext.p_size);
    return P_LKRG_SUCCESS;
@@ -105,8 +104,8 @@ int hash_from_kernel_rodata(void) {
 
 #endif
 
-   p_debug_log(P_LKRG_DBG,
-          "hash [0x%llx] _rodata start [0x%lx] size [0x%lx]\n",p_db.kernel_rodata.p_hash,
+   p_debug_log(P_LOG_DEBUG,
+          "hash [0x%llx] _rodata start [0x%lx] size [0x%lx]",p_db.kernel_rodata.p_hash,
                                                                (long)p_db.kernel_rodata.p_addr,
                                                                (long)p_db.kernel_rodata.p_size);
    return P_LKRG_SUCCESS;
@@ -138,8 +137,8 @@ int hash_from_iommu_table(void) {
    p_db.kernel_iommu_table.p_hash = 0xFFFFFFFF;
 #endif
 
-   p_debug_log(P_LKRG_DBG,
-          "hash [0x%llx] __iommu_table start [0x%lx] size [0x%lx]\n",p_db.kernel_iommu_table.p_hash,
+   p_debug_log(P_LOG_DEBUG,
+          "hash [0x%llx] __iommu_table start [0x%lx] size [0x%lx]",p_db.kernel_iommu_table.p_hash,
                                                                      (long)p_db.kernel_iommu_table.p_addr,
                                                                      (long)p_db.kernel_iommu_table.p_size);
 
@@ -155,7 +154,7 @@ int hash_from_iommu_table(void) {
 
 uint64_t hash_from_CPU_data(p_CPU_metadata_hash_mem *p_arg) {
 
-   int p_tmp = 0;
+   unsigned int p_tmp = 0;
    uint64_t p_hash = 0;
 
    for_each_present_cpu(p_tmp) {
@@ -168,17 +167,16 @@ uint64_t hash_from_CPU_data(p_CPU_metadata_hash_mem *p_arg) {
                p_hash ^= p_lkrg_fast_hash((unsigned char *)&p_arg[p_tmp],
                                           (unsigned int)offsetof(p_CPU_metadata_hash_mem, p_MSR_marker));
             }
-            p_debug_log(P_LKRG_DBG,
-                   "<hash_from_CPU_data> Hash for cpu id %i total_hash[0x%llx]\n",p_tmp,p_hash);
+            p_debug_log(P_LOG_DEBUG,
+                   "<hash_from_CPU_data> Hash for CPU %u total_hash[0x%llx]", p_tmp, p_hash);
          } else {
           // WTF?! I should never be here
-            p_print_log(P_LKRG_CRIT,
-                   "WTF?! DB corrupted?");
+            p_print_log(P_LOG_FAULT, "CPU %u is unexpectedly offline", p_tmp);
          }
       } else {
       // Skip offline CPUs
-         p_debug_log(P_LKRG_DBG,
-                "<hash_from_CPU_data> Offline cpu id %i total_hash[0x%llx]\n",p_tmp,p_hash);
+         p_debug_log(P_LOG_DEBUG,
+                "<hash_from_CPU_data> Offline CPU %u total_hash[0x%llx]", p_tmp, p_hash);
       }
    }
 
@@ -192,17 +190,8 @@ int p_create_database(void) {
 
    memset(&p_db,0,sizeof(p_hash_database));
 
-   if ( (P_SYM(p_jump_label_mutex) = (struct mutex *)P_SYM(p_kallsyms_lookup_name)("jump_label_mutex")) == NULL) {
-      p_print_log(P_LKRG_ERR,
-             "CREATING DATABASE: error! Can't find 'jump_label_mutex' variable :( Exiting...\n");
-      return P_LKRG_GENERAL_ERROR;
-   }
-
-   if ( (P_SYM(p_text_mutex) = (struct mutex *)P_SYM(p_kallsyms_lookup_name)("text_mutex")) == NULL) {
-      p_print_log(P_LKRG_ERR,
-             "CREATING DATABASE: error! Can't find 'text_mutex' variable :( Exiting...\n");
-      return P_LKRG_GENERAL_ERROR;
-   }
+   P_SYM_INIT(jump_label_mutex, struct mutex *)
+   P_SYM_INIT(text_mutex, struct mutex *)
 
    /*
     * First gather information about CPUs in the system - CRITICAL !!!
@@ -225,15 +214,14 @@ int p_create_database(void) {
       /*
        * I should NEVER be here!
        */
-      p_print_log(P_LKRG_CRIT,
-             "CREATING DATABASE: kzalloc() error! Can't allocate memory ;[\n");
+      p_print_log(P_LOG_FATAL, "Can't allocate memory for CPU metadata");
       return P_LKRG_GENERAL_ERROR;
    }
 // STRONG_DEBUG
      else {
-        p_debug_log(P_LKRG_STRONG_DBG,
+        p_debug_log(P_LOG_FLOOD,
                "<p_create_database> p_db.p_CPU_metadata_array[0x%lx] with requested size[%d] "
-               "= sizeof(p_CPU_metadata_hash_mem)[%d] * p_db.p_cpu.p_nr_cpu_ids[%d]\n",
+               "= sizeof(p_CPU_metadata_hash_mem)[%d] * p_db.p_cpu.p_nr_cpu_ids[%d]",
                (unsigned long)p_db.p_CPU_metadata_array,
                (int)(sizeof(p_CPU_metadata_hash_mem)*p_db.p_cpu.p_nr_cpu_ids),
                (int)sizeof(p_CPU_metadata_hash_mem),p_db.p_cpu.p_nr_cpu_ids);
@@ -268,8 +256,8 @@ int p_create_database(void) {
             smp_call_function_single(p_tmp,p_dump_CPU_metadata,p_db.p_CPU_metadata_array,true);
 //         }
       } else {
-         p_print_log(P_LKRG_WARN,
-                "!!! WARNING !!! CPU ID:%d is offline !!!\n",p_tmp);
+         p_print_log(P_LOG_ISSUE,
+                "!!! WARNING !!! CPU ID:%d is offline !!!",p_tmp);
 //                "Let's try to run on it anyway...",p_tmp);
 //         p_dump_CPU_metadata(p_db.p_CPU_metadata_array);
 //         smp_call_function_single(p_tmp,p_dump_CPU_metadata,p_db.p_CPU_metadata_array,true);
@@ -282,30 +270,26 @@ int p_create_database(void) {
 
    /* Some arch needs extra hooks */
    if (p_register_arch_metadata() != P_LKRG_SUCCESS) {
-      p_print_log(P_LKRG_ERR,
-             "CREATING DATABASE: error! Can't register CPU architecture specific metadata :( Exiting...\n");
+      p_print_log(P_LOG_FATAL, "Can't register CPU architecture specific metadata");
       return P_LKRG_GENERAL_ERROR;
    }
 
 
    if (hash_from_ex_table() != P_LKRG_SUCCESS) {
-      p_print_log(P_LKRG_CRIT,
-         "CREATING DATABASE ERROR: EXCEPTION TABLE CAN'T BE FOUND (skipping it)!\n");
+      p_print_log(P_LOG_FAULT, "Exception table can't be found (skipping)");
       p_db.kernel_ex_table.p_hash = p_db.kernel_ex_table.p_size = 0;
       p_db.kernel_ex_table.p_addr = NULL;
    }
 
 
    if (hash_from_kernel_rodata() != P_LKRG_SUCCESS) {
-      p_print_log(P_LKRG_CRIT,
-         "CREATING DATABASE ERROR: _RODATA CAN'T BE FOUND (skipping it)!\n");
+      p_print_log(P_LOG_FAULT, "_rodata can't be found (skipping)");
       p_db.kernel_rodata.p_hash = p_db.kernel_rodata.p_size = 0;
       p_db.kernel_rodata.p_addr = NULL;
    }
 
    if (hash_from_iommu_table() != P_LKRG_SUCCESS) {
-      p_print_log(P_LKRG_CRIT,
-         "CREATING DATABASE ERROR: IOMMU TABLE CAN'T BE FOUND (skipping it)!\n");
+      p_print_log(P_LOG_ISSUE, "IOMMU table can't be found (skipping)");
       p_db.kernel_iommu_table.p_hash = p_db.kernel_iommu_table.p_size = 0;
       p_db.kernel_iommu_table.p_addr = NULL;
    }
@@ -341,22 +325,8 @@ int p_create_database(void) {
    /* Register module notification routine - must be outside p_text_section_(un)lock */
    p_register_module_notifier();
 
-/*
-   if (p_install_arch_jump_label_transform_hook()) {
-      p_print_log(P_LKRG_ERR,
-             "ERROR: Can't hook arch_jump_label_transform function :(\n");
-      return P_LKRG_GENERAL_ERROR;
-   }
-
-   if (p_install_arch_jump_label_transform_static_hook()) {
-      p_print_log(P_LKRG_ERR,
-             "ERROR: Can't hook arch_jump_label_transform_static function :(\n");
-      return P_LKRG_GENERAL_ERROR;
-   }
-*/
-
-   p_debug_log(P_LKRG_DBG,
-          "p_module_list_hash => [0x%llx]\np_module_kobj_hash => [0x%llx]\n",
+   p_debug_log(P_LOG_DEBUG,
+          "p_module_list_hash => [0x%llx] p_module_kobj_hash => [0x%llx]",
           p_db.p_module_list_hash,p_db.p_module_kobj_hash);
 
    P_SYM(p_state_init) = 1;
@@ -368,8 +338,7 @@ int p_create_database(void) {
 #if !defined(CONFIG_GRKERNSEC)
    p_text_section_lock();
    if (hash_from_kernel_stext() != P_LKRG_SUCCESS) {
-      p_print_log(P_LKRG_CRIT,
-         "CREATING DATABASE ERROR: HASH FROM _STEXT!\n");
+      p_print_log(P_LOG_FATAL, "Can't compute hash from _stext");
       p_text_section_unlock();
       return P_LKRG_GENERAL_ERROR;
    }
@@ -377,4 +346,7 @@ int p_create_database(void) {
 #endif
 
    return P_LKRG_SUCCESS;
+
+p_sym_error:
+   return P_LKRG_GENERAL_ERROR;
 }

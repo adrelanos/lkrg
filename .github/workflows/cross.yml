@@ -17,12 +17,12 @@ on: [push, pull_request]
 
 jobs:
     cross:
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-22.04
         strategy:
             fail-fast: false
             matrix:
                 include:
-                    - image: arm64v8/ubuntu:impish
+                    - image: arm64v8/ubuntu:jammy
                       packages: libelf-dev linux-headers-generic
                     - image: arm32v7/alt:latest
                       packages: elfutils kernel-headers-modules-std-def
@@ -42,7 +42,7 @@ jobs:
                   RUN git clean -dxfq
                   RUN gcc -v; cat /etc/os-release
                   RUN make -j\$(nproc) KERNELRELEASE=\$(cd /lib/modules; ls)
-                  RUN file p_lkrg.ko
+                  RUN file lkrg.ko
                   EOF
             - run: docker build .
 

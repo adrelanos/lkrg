@@ -20,7 +20,7 @@
 
 #define P_HIDE_FROM_MODULE_LIST(p_arg)                                     \
 do {                                                                       \
-   p_debug_log(P_LKRG_DBG, "Hiding module [%s | 0x%lx]\n",                 \
+   p_debug_log(P_LOG_DEBUG, "Hiding module [%s | 0x%lx]",                  \
                                      p_arg->name,(unsigned long)p_arg);    \
    list_del(&p_arg->list);                                                 \
    /* p_arg->list.next->prev = p_arg->list.prev; */                        \
@@ -30,7 +30,7 @@ do {                                                                       \
 #define P_HIDE_FROM_KOBJ(p_arg)                                            \
 do {                                                                       \
    if (p_arg->holders_dir && p_arg->holders_dir->parent) {                 \
-      p_debug_log(P_LKRG_DBG, "Deleting KOBJ [0x%lx]\n",                   \
+      p_debug_log(P_LOG_DEBUG, "Deleting KOBJ [0x%lx]",                    \
                                (unsigned long)p_arg->holders_dir->parent); \
       kobject_del(p_arg->holders_dir->parent);                             \
    }                                                                       \
@@ -39,7 +39,7 @@ do {                                                                       \
 /*
 #define P_HIDE_FROM_KOBJ(p_arg)                                            \
 do {                                                                       \
-   p_debug_log(P_LKRG_DBG, "Deleting KOBJ [0x%lx]\n",                      \
+   p_debug_log(P_LOG_DEBUG, "Deleting KOBJ [0x%lx]",                       \
                                   (unsigned long)&p_arg->mkobj.kobj);      \
    kobject_del(&p_arg->mkobj.kobj);                                        \
    p_arg->sect_attrs  = NULL;                                              \
@@ -50,18 +50,18 @@ do {                                                                       \
 #if defined(CONFIG_DYNAMIC_DEBUG)
 #define P_HIDE_FROM_DDEBUG(p_arg)                                          \
 do {                                                                       \
-   p_debug_log(P_LKRG_DBG,                                                 \
-       "Deleting ddebug information for module [%s]\n",                    \
+   p_debug_log(P_LOG_DEBUG,                                                \
+       "Deleting ddebug information for module [%s]",                      \
                                               p_arg->name);                \
    p_ddebug_remove_module(p_arg->name);                                    \
 } while(0)
 #endif
 
-#ifdef P_LKRG_UNHIDE   // (P_SYM(p_find_me), P_SYM(p_global_modules))
+#ifdef P_LKRG_UNHIDE   // (P_SYM(p_find_me), P_SYM(p_modules))
 
 #define P_UNHIDE_FROM_MODULE_LIST(x, y)                                    \
 do {                                                                       \
-   p_debug_log(P_LKRG_DBG, "Unhiding module [%s | 0x%lx]\n",               \
+   p_debug_log(P_LOG_DEBUG, "Unhiding module [%s | 0x%lx]",                \
                                                 x->name,(unsigned long)x); \
    list_add_rcu(&x->list, y);                                              \
 } while(0)
@@ -72,11 +72,11 @@ do {                                                                       \
 /* struct kobject *p_kobj; */                                              \
    struct module_use *p_use;                                               \
    int p_tmp;                                                              \
-   p_debug_log(P_LKRG_DBG, "Creating KOBJ for [%s]\n",                     \
+   p_debug_log(P_LOG_DEBUG, "Creating KOBJ for [%s]",                      \
                                               p_mod->name);                \
 /* p_kobj = kset_find_obj(p_kset, p_mod->name);                            \
    if (p_kobj) {                                                           \
-      p_debug_log(P_LKRG_DBG, "Module [%s] is NOT hidden!\n",              \
+      p_debug_log(P_LOG_DEBUG, "Module [%s] is NOT hidden!",               \
                                               p_mod->name);                \
       kobject_put(p_kobj);                                                 \
       return;                                                              \
@@ -86,19 +86,19 @@ do {                                                                       \
    p_mod->mkobj.kobj.kset = p_kset;                                        \
    if (kobject_init_and_add(&p_mod->mkobj.kobj, p_ktype, NULL,             \
                                               "%s", p_mod->name)) {        \
-      p_debug_log(P_LKRG_DBG, "FAILED :(\n");                              \
-      return;                                                              \
+      p_debug_log(P_LOG_DEBUG, "FAILED :(");                               \
+      goto p_unhide_itself_exit;                                           \
    }                                                                       \
    p_mod->holders_dir = kobject_create_and_add("holders",                  \
                                               &p_mod->mkobj.kobj);         \
    if (!p_mod->holders_dir) {                                              \
-      p_debug_log(P_LKRG_DBG, "FAILED :(\n");                              \
-      return;                                                              \
+      p_debug_log(P_LOG_DEBUG, "FAILED :(");                               \
+      goto p_unhide_itself_exit;                                           \
    }                                                                       \
    if ( (p_tmp = sysfs_create_files(&p_mod->mkobj.kobj,                    \
                (const struct attribute **)&p_mod->modinfo_attrs)) != 0) {  \
-      p_debug_log(P_LKRG_DBG, "FAILED :(\n");                              \
-      return;                                                              \
+      p_debug_log(P_LOG_DEBUG, "FAILED :(");                               \
+      goto p_unhide_itself_exit;                                           \
    }                                                                       \
    /* add_usage_links() */                                                 \
    list_for_each_entry(p_use, &p_mod->target_list, target_list) {          \
@@ -114,7 +114,7 @@ do {                                                                       \
    p_mod->notes_attrs = NULL;                                              \
    p_mod->sect_attrs  = NULL;                                              \
    kobject_uevent(&p_mod->mkobj.kobj, KOBJ_ADD);                           \
-   p_debug_log(P_LKRG_DBG, "SUCCESS :)\n");                                \
+   p_debug_log(P_LOG_DEBUG, "SUCCESS :)");                                 \
 } while(0)
 
 /*
@@ -122,11 +122,11 @@ do {                                                                       \
 do {                                                                       \
    int p_ret;                                                              \
                                                                            \
-   p_debug_log(P_LKRG_DBG, "Reestoring KOBJ[0x%lx] for [%s]\n",            \
-                                  (unsigned long)&p_mod->mkobj.kobj,p_mod->name);   \
+   p_debug_log(P_LOG_DEBUG, "Restoring KOBJ[0x%lx] for [%s]",              \
+               (unsigned long)&p_mod->mkobj.kobj,p_mod->name);             \
    if ( (p_ret = kobject_add(&p_mod->mkobj.kobj, p_kobj_parent,            \
-                                                     "p_lkrg")) < 0) {     \
-      p_print_log(P_LKRG_INFO, "FAILED to restore KOBJ :(\n");             \
+                                                     "lkrg")) < 0) {       \
+      p_print_log(P_LOG_WATCH, "Failed to restore KOBJ");                  \
       return;                                                              \
    }                                                                       \
    p_mod->sect_attrs  = p_sect;                                            \
