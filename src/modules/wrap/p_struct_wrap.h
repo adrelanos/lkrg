@@ -25,6 +25,8 @@
 #ifndef P_LKRG_WRAPPER_H
 #define P_LKRG_WRAPPER_H
 
+extern struct mutex p_ro_page_mutex;
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)
 
 static inline void p_set_uid(kuid_t *p_arg, unsigned int p_val) {
@@ -197,10 +199,11 @@ static inline int p_ddebug_remove_module(const char *p_name) {
 
 #ifdef CONFIG_X86
 
+ #if defined(CONFIG_X86_64)
+
 /*
  * Get
  */
- #if defined(CONFIG_X86_64)
 static inline unsigned long p_regs_get_arg1(struct pt_regs *p_regs) {
    return p_regs->di;
 }
@@ -248,8 +251,49 @@ static inline unsigned long p_syscall_get_arg2(struct pt_regs *p_regs) {
 #endif
 }
 
+/*
+ * Set
+ */
+static inline void p_regs_set_arg1(struct pt_regs *p_regs, unsigned long p_val) {
+   p_regs->di = p_val;
+}
+
+static inline void p_regs_set_arg2(struct pt_regs *p_regs, unsigned long p_val) {
+   p_regs->si = p_val;
+}
+
+static inline void p_regs_set_ip(struct pt_regs *p_regs, unsigned long p_val) {
+   p_regs->ip = p_val;
+}
+
+static inline void p_regs_set_ret(struct pt_regs *p_regs, unsigned long p_val) {
+   p_regs->ax = p_val;
+}
+
+/*
+ * Syscalls
+ */
+static inline void p_syscall_set_arg1(struct pt_regs *p_regs, unsigned long p_val) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,17,0) && defined(CONFIG_ARCH_HAS_SYSCALL_WRAPPER)
+   p_regs_set_arg1((struct pt_regs *)p_regs_get_arg1(p_regs), p_val);
+#else
+   p_regs_set_arg1(p_regs, p_val);
+#endif
+}
+
+static inline void p_syscall_set_arg2(struct pt_regs *p_regs, unsigned long p_val) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,17,0) && defined(CONFIG_ARCH_HAS_SYSCALL_WRAPPER)
+   p_regs_set_arg2((struct pt_regs *)p_regs_get_arg1(p_regs), p_val);
+#else
+   p_regs_set_arg2(p_regs, p_val);
+#endif
+}
+
  #else
 
+/*
+ * Get
+ */
 static inline unsigned long p_regs_get_arg1(struct pt_regs *p_regs) {
    return p_regs->ax;
 }
@@ -301,47 +345,9 @@ static inline unsigned long p_syscall_get_arg2(struct pt_regs *p_regs) {
 #endif
 }
 
- #endif
-
-
 /*
  * Set
  */
- #if defined(CONFIG_X86_64)
-
-static inline void p_regs_set_arg1(struct pt_regs *p_regs, unsigned long p_val) {
-   p_regs->di = p_val;
-}
-
-static inline void p_regs_set_arg2(struct pt_regs *p_regs, unsigned long p_val) {
-   p_regs->si = p_val;
-}
-
-static inline void p_regs_set_ip(struct pt_regs *p_regs, unsigned long p_val) {
-   p_regs->ip = p_val;
-}
-
-/*
- * Syscalls
- */
-static inline void p_syscall_set_arg1(struct pt_regs *p_regs, unsigned long p_val) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,17,0) && defined(CONFIG_ARCH_HAS_SYSCALL_WRAPPER)
-   p_regs_set_arg1((struct pt_regs *)p_regs_get_arg1(p_regs), p_val);
-#else
-   p_regs_set_arg1(p_regs, p_val);
-#endif
-}
-
-static inline void p_syscall_set_arg2(struct pt_regs *p_regs, unsigned long p_val) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,17,0) && defined(CONFIG_ARCH_HAS_SYSCALL_WRAPPER)
-   p_regs_set_arg2((struct pt_regs *)p_regs_get_arg1(p_regs), p_val);
-#else
-   p_regs_set_arg2(p_regs, p_val);
-#endif
-}
-
- #else
-
 static inline void p_regs_set_arg1(struct pt_regs *p_regs, unsigned long p_val) {
    p_regs->ax = p_val;
 }
@@ -356,6 +362,10 @@ static inline void p_regs_set_arg3(struct pt_regs *p_regs, unsigned long p_val) 
 
 static inline void p_regs_set_ip(struct pt_regs *p_regs, unsigned long p_val) {
    p_regs->ip = p_val;
+}
+
+static inline void p_regs_set_ret(struct pt_regs *p_regs, unsigned long p_val) {
+   p_regs->ax = p_val;
 }
 
 /*
@@ -455,6 +465,8 @@ static inline void p_lkrg_open_rw(void) {
 
    unsigned long p_flags;
 
+   mutex_lock(&p_ro_page_mutex);
+
 //   preempt_disable();
    barrier();
    p_set_memory_rw((unsigned long)P_CTRL_ADDR,1);
@@ -472,6 +484,8 @@ static inline void p_lkrg_close_rw(void) {
    p_set_memory_ro((unsigned long)P_CTRL_ADDR,1);
    barrier();
 //   preempt_enable(); //_no_resched();
+
+   mutex_unlock(&p_ro_page_mutex);
 }
 
 /* ARM */
@@ -542,6 +556,10 @@ static inline void p_regs_set_ip(struct pt_regs *p_regs, unsigned long p_val) {
    p_regs->ARM_pc = p_val;
 }
 
+static inline void p_regs_set_ret(struct pt_regs *p_regs, unsigned long p_val) {
+   p_regs->ARM_r0 = p_val;
+}
+
 /*
  * Syscalls
  */
@@ -587,6 +605,8 @@ static inline void p_lkrg_open_rw(void) {
 
    unsigned long p_flags;
 
+   mutex_lock(&p_ro_page_mutex);
+
    preempt_disable();
    barrier();
    p_set_memory_rw((unsigned long)P_CTRL_ADDR,1);
@@ -604,6 +624,8 @@ static inline void p_lkrg_close_rw(void) {
    p_set_memory_ro((unsigned long)P_CTRL_ADDR,1);
    barrier();
    preempt_enable(); //_no_resched();
+
+   mutex_unlock(&p_ro_page_mutex);
 }
 
 /* ARM64 */
@@ -674,6 +696,10 @@ static inline void p_regs_set_ip(struct pt_regs *p_regs, unsigned long p_val) {
    p_regs->pc = p_val;
 }
 
+static inline void p_regs_set_ret(struct pt_regs *p_regs, unsigned long p_val) {
+   p_regs->regs[0] = p_val;
+}
+
 /*
  * Syscalls
  */
@@ -741,6 +767,8 @@ static inline void p_lkrg_open_rw(void) {
 
    unsigned long p_flags;
 
+   mutex_lock(&p_ro_page_mutex);
+
    preempt_disable();
    barrier();
    p_set_memory_rw((unsigned long)P_CTRL_ADDR,1);
@@ -758,6 +786,8 @@ static inline void p_lkrg_close_rw(void) {
    p_set_memory_ro((unsigned long)P_CTRL_ADDR,1);
    barrier();
    preempt_enable(); //_no_resched();
+
+   mutex_unlock(&p_ro_page_mutex);
 }
 
 #endif

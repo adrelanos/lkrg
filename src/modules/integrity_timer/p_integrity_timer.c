@@ -211,6 +211,12 @@ void p_check_integrity(struct work_struct *p_work) {
    p_tmp_hash = hash_from_CPU_data(p_tmp_cpus);
    p_read_cpu_unlock();
 
+   /* Verify kprobes now */
+   if (lkrg_verify_kprobes()) {
+      /* I'm hacked! ;( */
+      p_hack_check++;
+   }
+
    p_text_section_lock();
 
    /*
@@ -274,8 +280,8 @@ void p_check_integrity(struct work_struct *p_work) {
 
    if (p_db.kernel_stext.p_hash != p_tmp_hash) {
 #if defined(P_LKRG_JUMP_LABEL_STEXT_DEBUG)
-      char *p_str1 = (unsigned char *)p_db.kernel_stext.p_addr;
-      char *p_str2 = (unsigned char *)p_db.kernel_stext_copy;
+      unsigned char *p_str1 = (unsigned char *)p_db.kernel_stext.p_addr;
+      unsigned char *p_str2 = (unsigned char *)p_db.kernel_stext_copy;
       char p_eh_buf[0x100];
 #endif
       /* We detected core kernel .text corruption - we are hacked and can't recover */
@@ -322,6 +328,7 @@ void p_check_integrity(struct work_struct *p_work) {
          p_db.kernel_rodata.p_hash, p_tmp_hash);
    }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,19,0)
    /*
     * Checking memory block:
     * "__iommu_table"
@@ -343,6 +350,7 @@ void p_check_integrity(struct work_struct *p_work) {
       p_print_log(P_LOG_WATCH, "IOMMU table hash expected 0x%llx vs. actual 0x%llx",
          p_db.kernel_iommu_table.p_hash, p_tmp_hash);
    }
+#endif
 
    /*
     * Checking this kernel modules integrity.

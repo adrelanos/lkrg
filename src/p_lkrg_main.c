@@ -45,6 +45,8 @@ static enum cpuhp_state p_hot_cpus;
 #endif
 unsigned int p_attr_init = 0;
 
+DEFINE_MUTEX(p_ro_page_mutex);
+
 p_ro_page p_ro __p_lkrg_read_only = {
 
 #if !defined(CONFIG_ARM) && (!defined(P_KERNEL_AGGRESSIVE_INLINING) && defined(CONFIG_X86))
@@ -407,6 +409,27 @@ static int __init p_lkrg_register(void) {
    p_parse_module_params();
    P_SYM(p_find_me) = THIS_MODULE;
 
+   /*
+    * Verify if kprobes run as intended
+    */
+
+   /* Register kprobes hooks necessary to verify kprobes itself */
+   if (p_install_lkrg_dummy_hook(0)) {
+      p_print_log(P_LOG_FATAL, "Can't hook 'lkrg_dummy'");
+      return P_LKRG_GENERAL_ERROR;
+   }
+
+   /* Verify kprobes now */
+   if (lkrg_verify_kprobes()) {
+      /*
+       * Kprobes does not work as intended.
+       * LKRG can't function without it, stop initialization!
+       */
+      p_print_log(P_LOG_FATAL, "Can't continue initialization without working kprobes");
+      p_uninstall_lkrg_dummy_hook();
+      return P_LKRG_GENERAL_ERROR;
+   }
+
    P_SYM_INIT(freeze_processes, int (*)(void))
    P_SYM_INIT(thaw_processes, void (*)(void))
 #if defined(CONFIG_X86) && LINUX_VERSION_CODE >= KERNEL_VERSION(5,8,0)
@@ -546,6 +569,7 @@ p_main_error:
       p_unregister_arch_metadata();
       p_offload_cache_delete();
       p_deregister_module_notifier();
+      p_uninstall_lkrg_dummy_hook();
       if (p_db.p_CPU_metadata_array) {
          p_kzfree(p_db.p_CPU_metadata_array);
          p_db.p_CPU_metadata_array = NULL;
@@ -608,7 +632,7 @@ static void __exit p_lkrg_deregister(void) {
    p_unregister_arch_metadata();
    p_offload_cache_delete();
    p_deregister_module_notifier();
-
+   p_uninstall_lkrg_dummy_hook();
 
    if (p_db.p_CPU_metadata_array)
       p_kzfree(p_db.p_CPU_metadata_array);
